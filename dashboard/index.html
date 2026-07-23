@@ -3,123 +3,1415 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OULAD Learning Analytics Dashboard</title>
+  <meta
+    name="description"
+    content="A plain-language presentation of an OULAD learning analytics project."
+  >
+  <title>Understanding Student Engagement and Course Outcomes | Jose Chavez</title>
   <style>
-    :root { color-scheme: light; --ink:#172126; --muted:#58666d; --line:#ccd5d8;
-      --paper:#f7f9f8; --white:#fff; --blue:#176b87; --coral:#d95d39; }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:Inter, ui-sans-serif, system-ui, sans-serif;
-      color:var(--ink); background:var(--paper); line-height:1.55; }
-    header, main, footer { width:min(1180px, calc(100% - 40px)); margin:auto; }
-    header { padding:64px 0 38px; border-bottom:1px solid var(--line); }
-    h1 { max-width:900px; font-size:4rem; line-height:1; margin:8px 0 20px; }
-    h2 { font-size:1.6rem; margin:0 0 14px; }
-    p { max-width:800px; color:var(--muted); }
-    .eyebrow { color:var(--blue); text-transform:uppercase; font-weight:700; font-size:.76rem; }
-    .metrics { display:grid; grid-template-columns:repeat(6,1fr); gap:1px;
-      margin:32px 0; border:1px solid var(--line); background:var(--line); }
-    .metrics div { background:var(--white); padding:18px; }
-    .metrics strong { display:block; font-size:1.5rem; }
-    .metrics span { color:var(--muted); font-size:.82rem; }
-    section { padding:42px 0; border-bottom:1px solid var(--line); }
-    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:28px; }
-    figure { margin:0; background:var(--white); border:1px solid var(--line); }
-    img { display:block; width:100%; height:auto; }
-    figcaption { padding:14px 16px 18px; color:var(--muted); font-size:.9rem; }
-    figcaption strong { display:block; color:var(--ink); margin-bottom:4px; }
-    code { background:#e8edef; padding:2px 5px; }
-    a { color:var(--blue); }
-    footer { padding:28px 0 60px; color:var(--muted); }
-    @media (max-width:800px) {
-      h1 { font-size:2.5rem; }
-      .metrics { grid-template-columns:repeat(2,1fr); }
-      .grid { grid-template-columns:1fr; }
+    :root {
+      color-scheme: light;
+      --ink: #172126;
+      --muted: #526168;
+      --line: #c9d3d6;
+      --paper: #f6f8f7;
+      --white: #ffffff;
+      --blue: #176b87;
+      --blue-dark: #0d536c;
+      --coral: #c94f32;
+      --green: #2a7f62;
+      --gold: #a86f0c;
+      --forecast: #f4f7f9;
+      --limits: #fff4ef;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--white);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      line-height: 1.6;
+    }
+
+    img {
+      max-width: 100%;
+    }
+
+    a {
+      color: var(--blue-dark);
+      text-underline-offset: 3px;
+    }
+
+    a:hover {
+      color: var(--coral);
+    }
+
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--gold);
+      outline-offset: 4px;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      z-index: 20;
+      padding: 10px 14px;
+      color: var(--white);
+      background: var(--ink);
+      transform: translateY(-150%);
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .project-bar {
+      border-bottom: 1px solid var(--line);
+      background: var(--white);
+    }
+
+    .project-bar .shell {
+      display: flex;
+      min-height: 58px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .project-name {
+      color: var(--ink);
+      font-size: 0.88rem;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .project-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .hero {
+      padding: 52px 0 44px;
+      background: var(--paper);
+    }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--blue-dark);
+      font-size: 0.74rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3 {
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 990px;
+      margin: 0 0 20px;
+      font-size: 3.7rem;
+      line-height: 1.02;
+    }
+
+    h2 {
+      max-width: 820px;
+      margin: 0 0 16px;
+      font-size: 2.55rem;
+      line-height: 1.08;
+    }
+
+    h3 {
+      margin: 8px 0 18px;
+      font-size: 1.8rem;
+      line-height: 1.18;
+    }
+
+    .hero-intro {
+      max-width: 820px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.2rem;
+    }
+
+    .responsible-use {
+      max-width: 850px;
+      margin: 22px 0 0;
+      padding: 14px 0 14px 20px;
+      border-left: 4px solid var(--coral);
+      color: var(--ink);
+      font-weight: 650;
+    }
+
+    .page-nav {
+      margin-top: 28px;
+    }
+
+    .page-nav ul {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .page-nav a {
+      display: inline-flex;
+      min-height: 42px;
+      align-items: center;
+      padding: 8px 13px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      color: var(--ink);
+      background: var(--white);
+      font-size: 0.84rem;
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .page-nav a:hover {
+      border-color: var(--blue);
+      color: var(--blue-dark);
+    }
+
+    .section {
+      padding: 72px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section-alt {
+      background: var(--paper);
+      box-shadow: 0 0 0 100vmax var(--paper);
+      clip-path: inset(0 -100vmax);
+    }
+
+    .why-section {
+      padding-top: 48px;
+      padding-bottom: 48px;
+    }
+
+    .why-section .section-head {
+      margin-bottom: 0;
+    }
+
+    .section-forecast {
+      background: var(--forecast);
+      box-shadow: 0 0 0 100vmax var(--forecast);
+      clip-path: inset(0 -100vmax);
+    }
+
+    .section-head {
+      max-width: 820px;
+      margin-bottom: 38px;
+    }
+
+    .section-head > p:last-child,
+    .chart-copy > p:not(.eyebrow, .takeaway, .interpretation-note) {
+      color: var(--muted);
+    }
+
+    .question-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin: 0;
+      padding: 0;
+      border-top: 1px solid var(--line);
+      list-style: none;
+      counter-reset: question;
+    }
+
+    .question-list li {
+      position: relative;
+      min-width: 0;
+      padding: 21px 22px 21px 52px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      counter-increment: question;
+    }
+
+    .question-list li:nth-child(2n) {
+      border-right: 0;
+    }
+
+    .question-list li::before {
+      position: absolute;
+      top: 21px;
+      left: 8px;
+      color: var(--coral);
+      font-size: 0.74rem;
+      font-weight: 800;
+      content: "0" counter(question);
+    }
+
+    .dataset-intro {
+      max-width: 880px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin: 36px 0 22px;
+      border-top: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+    }
+
+    .metrics div {
+      min-width: 0;
+      padding: 21px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: var(--white);
+    }
+
+    .metrics strong {
+      display: block;
+      font-size: 1.7rem;
+      line-height: 1.1;
+    }
+
+    .metrics span,
+    .metrics small {
+      display: block;
+    }
+
+    .metrics span {
+      margin-top: 5px;
+      font-weight: 750;
+    }
+
+    .metrics small {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .source-note {
+      max-width: 880px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .finding-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 36px;
+      margin: 0;
+      padding: 0;
+      border-top: 1px solid var(--line);
+      list-style: none;
+    }
+
+    .finding-summary li {
+      min-width: 0;
+      padding: 22px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .finding-summary strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 1.05rem;
+    }
+
+    .finding-summary span {
+      color: var(--muted);
+    }
+
+    .chart-sequence {
+      border-top: 1px solid var(--line);
+    }
+
+    .chart-slide {
+      display: grid;
+      grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
+      gap: 52px;
+      align-items: center;
+      padding: 58px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .chart-slide-reverse .chart-copy {
+      order: 2;
+    }
+
+    .chart-slide-reverse figure {
+      order: 1;
+    }
+
+    .chart-copy {
+      min-width: 0;
+    }
+
+    .takeaway {
+      margin: 0 0 18px;
+      padding-left: 16px;
+      border-left: 3px solid var(--gold);
+      color: var(--ink);
+      font-size: 1.08rem;
+      font-weight: 750;
+      line-height: 1.5;
+    }
+
+    .interpretation-note {
+      margin: 22px 0 0;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .interpretation-note strong {
+      color: var(--ink);
+    }
+
+    figure {
+      min-width: 0;
+      margin: 0;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: var(--white);
+      overflow: hidden;
+    }
+
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    figcaption {
+      padding: 14px 16px 17px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    details {
+      margin-top: 20px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+
+    summary {
+      padding: 12px 0;
+      color: var(--blue-dark);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    details p {
+      margin: 0;
+      padding: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .forecast-question {
+      max-width: 940px;
+      padding: 26px 0 26px 24px;
+      border-left: 5px solid var(--blue);
+    }
+
+    .forecast-question h3 {
+      margin-top: 0;
+    }
+
+    .forecast-question p {
+      max-width: 820px;
+      color: var(--muted);
+    }
+
+    .evaluation-flow,
+    .method-flow {
+      display: grid;
+      margin: 38px 0;
+      border-top: 1px solid var(--line);
+      border-left: 1px solid var(--line);
+    }
+
+    .evaluation-flow {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .method-flow {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .evaluation-flow div,
+    .method-flow div {
+      min-width: 0;
+      padding: 20px;
+      border-right: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      background: var(--white);
+    }
+
+    .evaluation-flow span,
+    .method-flow span {
+      display: block;
+      margin-bottom: 14px;
+      color: var(--coral);
+      font-size: 0.73rem;
+      font-weight: 850;
+    }
+
+    .evaluation-flow strong,
+    .method-flow strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .evaluation-flow p,
+    .method-flow p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .model-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 28px;
+      margin-top: 34px;
+    }
+
+    .model-summary div {
+      padding: 22px 0;
+      border-top: 4px solid var(--green);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .model-summary strong {
+      display: block;
+      font-size: 2rem;
+    }
+
+    .model-summary span {
+      display: block;
+      margin: 5px 0 10px;
+      font-weight: 800;
+    }
+
+    .model-summary p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .method-intro {
+      max-width: 850px;
+      color: var(--muted);
+      font-size: 1.04rem;
+    }
+
+    .technology-line {
+      margin: 26px 0 0;
+      color: var(--muted);
+    }
+
+    .technology-line strong {
+      color: var(--ink);
+    }
+
+    .limits {
+      background: var(--limits);
+      box-shadow: 0 0 0 100vmax var(--limits);
+      clip-path: inset(0 -100vmax);
+      border-top: 5px solid var(--coral);
+    }
+
+    .limits-grid,
+    .skills-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 36px;
+      margin: 30px 0 0;
+      padding: 0;
+      border-top: 1px solid var(--line);
+      list-style: none;
+    }
+
+    .limits-grid li,
+    .skills-list li {
+      position: relative;
+      padding: 16px 0 16px 24px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .limits-grid li::before,
+    .skills-list li::before {
+      position: absolute;
+      left: 0;
+      color: var(--coral);
+      font-weight: 900;
+      content: "/";
+    }
+
+    .skills-list li::before {
+      color: var(--green);
+      content: "+";
+    }
+
+    .glossary {
+      margin-top: 0;
+      border: 0;
+    }
+
+    .glossary summary {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      padding: 10px 0;
+      font-size: 1rem;
+    }
+
+    .terms {
+      display: grid;
+      grid-template-columns: minmax(180px, 0.32fr) minmax(0, 1fr);
+      margin: 24px 0 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .terms dt,
+    .terms dd {
+      margin: 0;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .terms dt {
+      padding-right: 20px;
+      font-weight: 850;
+    }
+
+    .terms dd {
+      color: var(--muted);
+    }
+
+    .closing-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .button-link {
+      display: inline-flex;
+      min-height: 44px;
+      align-items: center;
+      padding: 10px 15px;
+      border: 1px solid var(--blue);
+      border-radius: 4px;
+      color: var(--blue-dark);
+      background: var(--white);
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    footer {
+      padding: 34px 0 56px;
+      color: var(--muted);
+      background: var(--paper);
+      font-size: 0.86rem;
+    }
+
+    footer p {
+      margin: 0;
+    }
+
+    @media (max-width: 900px) {
+      h1 {
+        font-size: 3.15rem;
+      }
+
+      .chart-slide,
+      .method-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-slide-reverse .chart-copy,
+      .chart-slide-reverse figure {
+        order: initial;
+      }
+
+      .method-flow div {
+        display: grid;
+        grid-template-columns: 36px minmax(0, 1fr);
+        gap: 0 8px;
+      }
+
+      .method-flow span {
+        grid-row: span 2;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .shell {
+        width: min(100% - 24px, 1180px);
+      }
+
+      .project-bar .shell {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 5px;
+        padding: 12px 0;
+      }
+
+      .project-links {
+        gap: 12px;
+      }
+
+      .hero,
+      .section {
+        padding: 48px 0;
+      }
+
+      .hero {
+        padding: 34px 0;
+      }
+
+      h1 {
+        font-size: 2.2rem;
+      }
+
+      h2 {
+        font-size: 2rem;
+      }
+
+      h3 {
+        font-size: 1.45rem;
+      }
+
+      .hero-intro {
+        font-size: 1.04rem;
+        line-height: 1.5;
+      }
+
+      .responsible-use {
+        margin-top: 20px;
+        padding: 12px 0 12px 18px;
+        line-height: 1.5;
+      }
+
+      .page-nav {
+        display: none;
+      }
+
+      .why-section {
+        padding-top: 38px;
+        padding-bottom: 38px;
+      }
+
+      .question-list,
+      .metrics,
+      .finding-summary,
+      .evaluation-flow,
+      .model-summary,
+      .limits-grid,
+      .skills-list,
+      .terms {
+        grid-template-columns: 1fr;
+      }
+
+      .question-list li {
+        border-right: 0;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .chart-slide {
+        gap: 28px;
+        padding: 44px 0;
+      }
+
+      .terms dt {
+        padding-bottom: 3px;
+        border-bottom: 0;
+      }
+
+      .terms dd {
+        padding-top: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div class="eyebrow">Learning Analytics / OULAD</div>
-    <h1>Engagement, assessment, and outcome forecasting</h1>
-    <p>A focused view of anonymized historical patterns and model behavior. This is
-    not an operational student-monitoring interface and contains no action list.</p>
-    <div class="metrics">
-      <div><strong>7</strong><span>modules</span></div>
-      <div><strong>22</strong><span>presentations</span></div>
-      <div><strong>28,785</strong><span>unique students</span></div>
-      <div><strong>32,593</strong><span>student attempts</span></div>
-      <div><strong>206</strong><span>assessments</span></div>
-      <div><strong>10,655,280</strong><span>activity records</span></div>
+  <a class="skip-link" href="#main-content">Skip to project content</a>
+
+  <nav class="project-bar" aria-label="Project resources">
+    <div class="shell">
+      <a class="project-name" href="/#/data-science/learning-analytics">
+        Jose Chavez / Learning Analytics
+      </a>
+      <div class="project-links">
+        <a href="/#/data-science/learning-analytics">Project case study</a>
+        <a href="https://github.com/FollowingJCABIC/learning-analytics-oulad">GitHub repository</a>
+        <a href="https://github.com/FollowingJCABIC/learning-analytics-oulad/blob/main/docs/methodology.md">Methodology</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="shell">
+      <p class="eyebrow">Learning Analytics Project</p>
+      <h1>Understanding Student Engagement, Assessments, and Course Outcomes</h1>
+      <p class="hero-intro">
+        This project uses anonymized historical online-course data to study how
+        recorded platform activity and assessment behavior relate to course
+        outcomes. It also tests whether information available during a course can
+        help estimate the risk of a poor result on the next assessment.
+      </p>
+      <p class="responsible-use">
+        This is a historical research and portfolio project. It does not monitor
+        current students, recommend interventions, or make decisions about individuals.
+      </p>
+      <nav class="page-nav" aria-label="Presentation sections">
+        <ul>
+          <li><a href="#questions">Questions</a></li>
+          <li><a href="#data">Data</a></li>
+          <li><a href="#key-findings">Key findings</a></li>
+          <li><a href="#forecasting">Forecasting</a></li>
+          <li><a href="#methods">How it was built</a></li>
+          <li><a href="#limits">Limitations</a></li>
+        </ul>
+      </nav>
     </div>
   </header>
-  <main>
-    <section>
-      <div class="eyebrow">Architecture</div>
-      <h2>SQL defines the analytical contract</h2>
-      <p>Official OULAD files -> Python source audit -> PostgreSQL raw, staging, and
-      core layers -> SQL marts and weekly snapshots -> Python statistics,
-      visualization, and modeling.</p>
+
+  <main id="main-content">
+    <section class="section why-section shell" aria-labelledby="why-title">
+      <div class="section-head">
+        <p class="eyebrow">Why this matters</p>
+        <h2 id="why-title">Online-course data is easy to count and easy to misread</h2>
+        <p>
+          Learning platforms create detailed records, but a click is not the same as
+          learning and a forecast is not the same as an explanation. This project
+          shows how those records can be organized into useful historical evidence
+          while keeping context, uncertainty, and responsible limits visible.
+        </p>
+      </div>
     </section>
-    <section>
-      <div class="eyebrow">Executed analysis</div>
-      <h2>Patterns in the downloaded archive</h2>
-      <div class="grid"><figure>
-          <img src="assets/outcome_distribution.png" alt="Bar chart of Distinction, Pass, Fail, and Withdrawn attempt counts.">
-          <figcaption><strong>Recorded outcomes</strong>Counts are student-module attempts, not unique people.</figcaption>
-        </figure>
-<figure>
-          <img src="assets/weekly_engagement.png" alt="Line chart of median and 75th percentile weekly VLE clicks.">
-          <figcaption><strong>Weekly engagement</strong>The median and upper quartile describe active records only; clicks do not measure motivation.</figcaption>
-        </figure>
-<figure>
-          <img src="assets/engagement_consistency.png" alt="Scatter plot of mean weekly clicks and number of active weeks by final result.">
-          <figcaption><strong>Consistency and volume</strong>Log-scaled volume and active-week count expose different aspects of recorded platform use.</figcaption>
-        </figure>
-<figure>
-          <img src="assets/assessment_missingness.png" alt="Horizontal bars compare missing submission rates across module-presentations.">
-          <figcaption><strong>Assessment completeness</strong>Differences may reflect course design and recording practices as well as student behavior.</figcaption>
-        </figure>
-<figure>
-          <img src="assets/submission_timing.png" alt="Horizontal bars compare median submission timing by module-presentation.">
-          <figcaption><strong>Submission timing</strong>Negative values indicate that the median recorded submission was before the due day.</figcaption>
-        </figure>
-<figure>
-          <img src="assets/withdrawal_alignment.png" alt="Line chart of median activity in weeks around recorded unregistration.">
-          <figcaption><strong>Withdrawal timing</strong>Alignment is descriptive and cannot identify why an attempt ended.</figcaption>
-        </figure>
-<figure>
-          <img src="assets/model_comparison.png" alt="Horizontal bars compare held-out precision-recall AUC by model.">
-          <figcaption><strong>Held-out model comparison</strong>Complete 2014J presentations form the test set; correlated weekly rows are not randomly mixed.</figcaption>
-        </figure>
-<figure>
-          <img src="assets/calibration.png" alt="Predicted probability plotted against observed next-assessment event rate.">
-          <figcaption><strong>Probability calibration</strong>Calibration checks whether similar predicted probabilities have similar observed event rates.</figcaption>
-        </figure>
-<figure>
-          <img src="assets/threshold_curve.png" alt="Precision and recall plotted against percentage of records flagged.">
-          <figcaption><strong>Threshold tradeoffs</strong>Changing the threshold changes both the number of records flagged and the error balance.</figcaption>
-        </figure>
-<figure>
-          <img src="assets/performance_by_week.png" alt="Line chart of held-out precision-recall AUC and Brier score by course week.">
-          <figcaption><strong>Forecast timing</strong>Forecast performance changes as a longer course history becomes available.</figcaption>
-        </figure></div>
+
+    <section class="section shell" id="questions" aria-labelledby="questions-title">
+      <div class="section-head">
+        <p class="eyebrow">What this project asks</p>
+        <h2 id="questions-title">Five questions guide the analysis</h2>
+        <p>
+          These questions organize the charts that follow, moving from description
+          to forecasting without treating a statistical association as a cause.
+        </p>
+      </div>
+      <ol class="question-list">
+        <li>How did recorded online activity change across the course?</li>
+        <li>How did missing assessments and submission timing differ across courses?</li>
+        <li>What did recorded activity look like near withdrawal?</li>
+        <li>Could information available so far help forecast the next assessment?</li>
+        <li>How reliable were the model's rankings and predicted probabilities?</li>
+      </ol>
     </section>
-    <section>
-      <div class="eyebrow">Forecast evaluation</div>
-      <h2>Next-assessment event, evaluated by presentation</h2>
-      <p>Held-out calibrated logistic PR AUC 0.594; Brier score 0.130. The target is a missing next assessment by its due
-      day or a recorded score below 40. Features use only data available through
-      each weekly snapshot.</p>
+
+    <section class="section section-alt shell" id="data" aria-labelledby="data-title">
+      <div class="section-head">
+        <p class="eyebrow">The historical data</p>
+        <h2 id="data-title">What is OULAD?</h2>
+        <p class="dataset-intro">
+          The Open University Learning Analytics Dataset (OULAD) is an anonymized
+          historical dataset containing course information, assessment records,
+          recorded student outcomes, and activity on an online learning platform.
+          It covers selected Open University course offerings from 2013 and 2014.
+        </p>
+      </div>
+      <dl class="metrics">
+        <div>
+          <dt><strong>7</strong><span>courses</span></dt>
+          <dd><small>Called modules in OULAD</small></dd>
+        </div>
+        <div>
+          <dt><strong>22</strong><span>course offerings</span></dt>
+          <dd><small>Called module presentations</small></dd>
+        </div>
+        <div>
+          <dt><strong>28,785</strong><span>individual students</span></dt>
+          <dd><small>Unique anonymized identifiers</small></dd>
+        </div>
+        <div>
+          <dt><strong>32,593</strong><span>course enrollments or attempts</span></dt>
+          <dd><small>One student taking one offering</small></dd>
+        </div>
+        <div>
+          <dt><strong>206</strong><span>assessments</span></dt>
+          <dd><small>Coursework and exam definitions</small></dd>
+        </div>
+        <div>
+          <dt><strong>10.7 million</strong><span>recorded online interactions</span></dt>
+          <dd><small>10,655,280 exact activity records</small></dd>
+        </div>
+      </dl>
+      <p class="source-note">
+        The same student can appear in more than one course attempt. A recorded click
+        indicates platform use, but it does not directly measure effort, motivation,
+        attention, understanding, learning, or offline study.
+        <a href="https://archive.ics.uci.edu/dataset/349/open+university+learning+analytics+dataset">View the official UCI source.</a>
+      </p>
     </section>
-    <section>
-      <div class="eyebrow">Limits</div>
-      <h2>Clicks are traces, not explanations</h2>
-      <p>OULAD describes selected anonymized Open University modules from 2013-2014.
-      Clicks do not directly measure effort, motivation, attention, or learning.
-      Withdrawal may reflect circumstances absent from the data. Findings are
-      associations and may not generalize to another institution or period.</p>
+
+    <section
+      class="section shell"
+      id="key-findings"
+      aria-labelledby="key-findings-title"
+    >
+      <div class="section-head">
+        <p class="eyebrow">What I found</p>
+        <h2 id="key-findings-title">The main findings in one minute</h2>
+        <p>
+          Each statement below comes from the downloaded archive, PostgreSQL analysis
+          tables, or saved held-out model results.
+        </p>
+      </div>
+      <ul class="finding-summary">
+        <li>
+          <strong>Withdrawal was a substantial recorded outcome.</strong>
+          <span>10,156 of 32,593 attempts, or 31.2%, ended in
+          withdrawal. The data does not record every reason why.</span>
+        </li>
+        <li>
+          <strong>Recorded activity changed over the course.</strong>
+          <span>The typical active-record median peaked at 70 clicks in
+          week 2 and was 18.5 by week 12.</span>
+        </li>
+        <li>
+          <strong>Missing assessments varied greatly by course offering.</strong>
+          <span>Observed rates ranged from 14.7% to 56.5%, so one
+          universal missing-work rule would ignore course context.</span>
+        </li>
+        <li>
+          <strong>Recorded activity became quieter near withdrawal.</strong>
+          <span>Median clicks moved from 26 twelve weeks before
+          unregistration to 10 one week before it.</span>
+        </li>
+        <li>
+          <strong>The assessment forecast found some useful signal.</strong>
+          <span>The interpretable calibrated model reached 0.594 precision-recall
+          AUC against a 0.211 prevalence baseline.</span>
+        </li>
+        <li>
+          <strong>The forecast remained uncertain and context-specific.</strong>
+          <span>Probability errors remained, performance changed by week, and results
+          may not transfer to another institution or period.</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="section section-alt shell" aria-labelledby="analysis-title">
+      <div class="section-head">
+        <p class="eyebrow">The descriptive story</p>
+        <h2 id="analysis-title">What the historical records show</h2>
+        <p>
+          Each chart answers one project question. The takeaway appears first, followed
+          by what was measured and the most important interpretation limit.
+        </p>
+      </div>
+      <div class="chart-sequence">
+        <article class="chart-slide" id="course-outcomes">
+        <div class="chart-copy">
+          <p class="eyebrow">Course outcomes</p>
+          <h3>How often did each recorded course outcome occur?</h3>
+          <p class="takeaway">Withdrawal accounted for 31.2% of course attempts, so it was not a rare edge case in these records.</p>
+          <p>The bars count one outcome for each course attempt: 3,024 distinction, 12,361 pass, 7,052 fail, and 10,156 withdrawal. A course attempt is one student taking one course offering, not necessarily one unique person.</p>
+          <p class="interpretation-note">
+            <strong>Keep in mind:</strong> The chart reports historical outcomes. It does not explain why a course attempt ended in withdrawal, failure, or success.
+          </p>
+        </div>
+        <figure>
+          <img
+            src="assets/outcome_distribution.png"
+            alt="Bar chart of recorded course outcomes. Pass is highest at 12,361 attempts, followed by withdrawal at 10,156, fail at 7,052, and distinction at 3,024."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>Recorded outcomes across 32,593 course enrollments or attempts.</figcaption>
+        </figure>
+      </article>
+<article class="chart-slide chart-slide-reverse" id="weekly-activity">
+        <div class="chart-copy">
+          <p class="eyebrow">Weekly online activity</p>
+          <h3>How did recorded platform activity change across the term?</h3>
+          <p class="takeaway">The typical weekly median rose from 46 clicks in week 0 to 70 in week 2, then fell to 18.5 by week 12.</p>
+          <p>The median represents a typical active record. The upper quartile represents a comparatively active portion of the records and remained at 41.5 clicks in week 12. The gap shows why one average cannot describe everyone.</p>
+          <p class="interpretation-note">
+            <strong>Keep in mind:</strong> This chart summarizes active records. The forecasting data also retains weeks with zero recorded activity so those weeks are not silently dropped. Clicks indicate platform use, not attention, understanding, motivation, or learning.
+          </p>
+          <details class="technical-note">
+            <summary>Technical note</summary>
+            <p>The plotted lines are medians of module-presentation summaries. The forecasting table uses one row per student attempt and course week, including explicit zero-activity weeks.</p>
+          </details>
+        </div>
+        <figure>
+          <img
+            src="assets/weekly_engagement.png"
+            alt="Line chart of weekly online-platform clicks. The median peaks at 70 in week 2 and falls to 18.5 by week 12, while the upper quartile stays higher throughout."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>Median and upper-quartile clicks per active course-attempt record.</figcaption>
+        </figure>
+      </article>
+<article class="chart-slide" id="activity-consistency">
+        <div class="chart-copy">
+          <p class="eyebrow">Activity consistency</p>
+          <h3>Why separate activity volume from consistency?</h3>
+          <p class="takeaway">Similar activity volumes appear across very different numbers of active weeks, and the recorded outcome groups overlap heavily.</p>
+          <p>Two students can produce a similar number of clicks per active week while one appears in many more course weeks. Volume and consistency describe different aspects of the historical record, so the analysis retains both.</p>
+          <p class="interpretation-note">
+            <strong>Keep in mind:</strong> Neither axis measures learning quality, and neither measure alone cleanly separates the four recorded course outcomes.
+          </p>
+        </div>
+        <figure>
+          <img
+            src="assets/engagement_consistency.png"
+            alt="Scatter plot comparing mean clicks in active weeks with number of active course weeks. Points for distinction, pass, fail, and withdrawal overlap across much of the chart."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>Each point is a course attempt; the horizontal axis uses a log scale so low and high click volumes remain visible.</figcaption>
+        </figure>
+      </article>
+<article class="chart-slide chart-slide-reverse" id="missing-assessments">
+        <div class="chart-copy">
+          <p class="eyebrow">Missing assessments</p>
+          <h3>How much did missing assessment records differ by course?</h3>
+          <p class="takeaway">The percentage ranged from 14.7% in AAA 2013J to 56.5% in CCC 2014B.</p>
+          <p>Each bar is the percentage of eligible student-assessment pairs without a recorded submission in one course offering. The wide range is why the analysis keeps course context rather than using one universal missing-work rule.</p>
+          <p class="interpretation-note">
+            <strong>Keep in mind:</strong> Differences may reflect course structure, assessment design, deadlines, extensions, recording practices, and circumstances not represented in the data. Missing work is not proof of low effort.
+          </p>
+        </div>
+        <figure>
+          <img
+            src="assets/assessment_missingness.png"
+            alt="Horizontal bar chart of missing assessment percentages by course offering, ranging from 14.7% to 56.5%."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>OULAD calls courses modules and course offerings module presentations.</figcaption>
+        </figure>
+      </article>
+<article class="chart-slide" id="submission-timing">
+        <div class="chart-copy">
+          <p class="eyebrow">Submission timing</p>
+          <h3>Were assessments usually recorded before or after the deadline?</h3>
+          <p class="takeaway">Typical timing ranged from 14 days early in GGG 2013J to 2 days late in the latest-recorded offerings.</p>
+          <p>A negative value means the median submission was recorded before the due date. A positive value means it was recorded after the due date. Zero means the typical recorded submission occurred on the deadline.</p>
+          <p class="interpretation-note">
+            <strong>Keep in mind:</strong> The chart does not capture every extension, local policy, or personal circumstance that may have affected timing.
+          </p>
+        </div>
+        <figure>
+          <img
+            src="assets/submission_timing.png"
+            alt="Horizontal bar chart of median submission timing by course offering, ranging from 14 days before the deadline to 2 days after it."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>Median days relative to the assessment due date; negative values mean early.</figcaption>
+        </figure>
+      </article>
+<article class="chart-slide chart-slide-reverse" id="withdrawal-timing">
+        <div class="chart-copy">
+          <p class="eyebrow">Withdrawal timing</p>
+          <h3>What did recorded activity look like near withdrawal?</h3>
+          <p class="takeaway">Median weekly clicks moved from 26 twelve weeks before unregistration to 10 in the week immediately before it.</p>
+          <p>The chart aligns each withdrawing course attempt around the week in which unregistration was recorded. This makes relative timing comparable even when calendar dates differ.</p>
+          <p class="interpretation-note">
+            <strong>Keep in mind:</strong> The pattern cannot explain why someone withdrew. Academic, financial, employment, family, health, and other circumstances may be absent from OULAD, and the number of observable attempts changes across relative weeks.
+          </p>
+        </div>
+        <figure>
+          <img
+            src="assets/withdrawal_alignment.png"
+            alt="Line chart of activity around withdrawal. Median weekly clicks decline from 26 twelve weeks before unregistration to 10 one week before it."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>Median recorded clicks in weeks aligned to the unregistration date.</figcaption>
+        </figure>
+      </article>
+      </div>
+    </section>
+
+    <section
+      class="section section-forecast shell"
+      id="forecasting"
+      aria-labelledby="forecasting-title"
+    >
+      <div class="section-head">
+        <p class="eyebrow">Forecasting</p>
+        <h2 id="forecasting-title">
+          Can course information available so far help forecast the next assessment?
+        </h2>
+        <p>
+          The historical records contained some useful predictive information, but
+          the forecast remained uncertain. It should be treated as an analytical
+          demonstration, not a diagnosis or an automated decision about an individual.
+        </p>
+      </div>
+
+      <div class="forecast-question">
+        <h3>What exactly is being forecast?</h3>
+        <p>
+          At the end of each course week, the model estimates whether the next non-exam
+          assessment will be missing by its due date or will receive a recorded score
+          below 40. Each weekly snapshot represents what would have been known by the
+          end of that week. Later activity and future assessment results are excluded.
+        </p>
+      </div>
+
+      <div class="evaluation-flow" aria-label="Model evaluation sequence">
+        <div>
+          <span>01</span>
+          <strong>Learn from 2013</strong>
+          <p>The models were trained using earlier course offerings.</p>
+        </div>
+        <div>
+          <span>02</span>
+          <strong>Choose with 2014B</strong>
+          <p>A separate group supported model selection and probability calibration.</p>
+        </div>
+        <div>
+          <span>03</span>
+          <strong>Test on unseen 2014J</strong>
+          <p>Complete later offerings were held back for the final evaluation.</p>
+        </div>
+      </div>
+      <p class="source-note">
+        Weekly records from the same course offering were kept together instead of
+        being randomly scattered across training and testing. This temporal held-out
+        design reduces the chance that closely related records appear on both sides of
+        the evaluation.
+      </p>
+
+      <div class="model-summary" aria-label="Interpretable model summary">
+        <div>
+          <strong>0.594</strong>
+          <span>Precision-recall AUC</span>
+          <p>
+            Summarizes how well the model ranks upcoming negative assessment events
+            above other records. Higher is better; 1.0 is perfect. The held-out event
+            prevalence baseline was 0.211.
+          </p>
+        </div>
+        <div>
+          <strong>0.130</strong>
+          <span>Brier score</span>
+          <p>
+            Measures how close predicted probabilities were to what happened. Lower
+            is better; 0 represents perfect probability predictions.
+          </p>
+        </div>
+      </div>
+
+      <div class="chart-sequence">
+        <article class="chart-slide" id="model-comparison">
+        <div class="chart-copy">
+          <p class="eyebrow">Model comparison</p>
+          <h3>Did the historical records contain predictive information?</h3>
+          <p class="takeaway">The calibrated logistic model reached 0.594 precision-recall AUC, compared with an event prevalence baseline of 0.211.</p>
+          <p>The gradient-boosted challenger ranked highest at 0.642, while the calibrated logistic model remains the interpretable probability reference. The later 2014J course offerings were unseen during model training.</p>
+          <p class="interpretation-note">
+            <strong>Keep in mind:</strong> The result shows some predictive information, not certainty, causation, or deployment readiness. It is not a diagnosis of a student.
+          </p>
+          <details class="technical-note">
+            <summary>Technical note</summary>
+            <p>Precision-recall AUC summarizes how effectively a model ranks records with an upcoming event above records without one. A score of 1.0 is perfect; event prevalence supplies a useful baseline.</p>
+          </details>
+        </div>
+        <figure>
+          <img
+            src="assets/model_comparison.png"
+            alt="Horizontal bar chart comparing held-out precision-recall AUC. The prevalence baseline is 0.211, the calibrated logistic model is 0.594, and the gradient-boosted model is highest at 0.642."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>Higher precision-recall AUC means better ranking of upcoming negative assessment events.</figcaption>
+        </figure>
+      </article>
+<article class="chart-slide chart-slide-reverse" id="calibration">
+        <div class="chart-copy">
+          <p class="eyebrow">Probability quality</p>
+          <h3>Did predicted probabilities resemble what happened?</h3>
+          <p class="takeaway">Predicted and observed rates were close in lower-risk groups, while the highest-risk group was overestimated.</p>
+          <p>In the highest probability group, the mean prediction was 85% and the observed event rate was 70%. Calibration asks whether a predicted 30% risk corresponds to an event rate near 30% among similar records.</p>
+          <p class="interpretation-note">
+            <strong>Keep in mind:</strong> A model can rank records reasonably well while still producing imperfect probabilities. Ranking and probability accuracy are different evaluation questions.
+          </p>
+          <details class="technical-note">
+            <summary>Technical note</summary>
+            <p>The calibrated logistic model&#x27;s Brier score is 0.130. Brier score measures squared error between predicted probabilities and outcomes; lower is better and 0 is perfect.</p>
+          </details>
+        </div>
+        <figure>
+          <img
+            src="assets/calibration.png"
+            alt="Calibration plot comparing predicted probability with observed event rate. Lower-probability groups stay near the perfect calibration line, while the two highest groups fall below it."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>The dashed diagonal represents perfect agreement between predicted and observed rates.</figcaption>
+        </figure>
+      </article>
+<article class="chart-slide" id="thresholds">
+        <div class="chart-copy">
+          <p class="eyebrow">Decision thresholds</p>
+          <h3>What changes when the probability cutoff moves?</h3>
+          <p class="takeaway">Flagging more records finds more eventual events, but it also creates more false alarms.</p>
+          <p>At a 50% cutoff, 16,901 of 117,186 weekly records were flagged (14.4%). Precision was 61.6%, recall was 42.1%, and true alerts had a median 26 days of lead time.</p>
+          <p class="interpretation-note">
+            <strong>Keep in mind:</strong> There is no universally correct threshold. The appropriate cutoff depends on purpose, resources, consequences of errors, and whether flagging would actually help.
+          </p>
+          <details class="technical-note">
+            <summary>Technical note</summary>
+            <p>Precision is the share of flags that became events. Recall is the share of all events that were flagged. A false alarm is a flag without the event; a missed case is an event below the cutoff.</p>
+          </details>
+        </div>
+        <figure>
+          <img
+            src="assets/threshold_curve.png"
+            alt="Line chart showing precision increasing and recall decreasing as the percentage of weekly records flagged becomes smaller."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>A threshold is the predicted-probability cutoff used to decide which records would be flagged.</figcaption>
+        </figure>
+      </article>
+<article class="chart-slide chart-slide-reverse" id="forecast-timing">
+        <div class="chart-copy">
+          <p class="eyebrow">Forecast timing</p>
+          <h3>How did forecast quality change as more history became available?</h3>
+          <p class="takeaway">Later weeks generally provided better ranking, but a later forecast also leaves less time for any useful response.</p>
+          <p>Early in a course, the model has relatively little activity and assessment history. Later weekly records contain a longer history, which can improve the forecast while reducing lead time.</p>
+          <p class="interpretation-note">
+            <strong>Keep in mind:</strong> The chart describes held-out 2014J offerings only. Week-specific performance may change in another institution, period, or course design.
+          </p>
+        </div>
+        <figure>
+          <img
+            src="assets/performance_by_week.png"
+            alt="Line chart showing held-out precision-recall AUC generally increasing after course week 2, while Brier score remains lower in later weeks."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>The practical tradeoff is earlier warning versus more complete information.</figcaption>
+        </figure>
+      </article>
+      </div>
+    </section>
+
+    <section class="section shell" id="methods" aria-labelledby="methods-title">
+      <div class="section-head">
+        <p class="eyebrow">How I built the analysis</p>
+        <h2 id="methods-title">A reproducible path from source files to findings</h2>
+        <p class="method-intro">
+          I used Python to inspect and validate the original files, PostgreSQL and SQL
+          to organize the data into consistent analysis tables, and Python again for
+          statistics, visualization, forecasting, and model evaluation.
+        </p>
+      </div>
+      <div class="method-flow" aria-label="Analysis workflow">
+        <div>
+          <span>01</span>
+          <strong>OULAD source</strong>
+          <p>Checksum-verified historical CSV files</p>
+        </div>
+        <div>
+          <span>02</span>
+          <strong>Python audit</strong>
+          <p>Rows, fields, missing values, and source scale</p>
+        </div>
+        <div>
+          <span>03</span>
+          <strong>PostgreSQL</strong>
+          <p>Raw, staging, and relational core tables</p>
+        </div>
+        <div>
+          <span>04</span>
+          <strong>SQL analysis</strong>
+          <p>Quality tests, analytical tables, and weekly snapshots</p>
+        </div>
+        <div>
+          <span>05</span>
+          <strong>Python outputs</strong>
+          <p>Statistics, charts, forecasts, and evaluation</p>
+        </div>
+      </div>
+      <p class="technology-line">
+        <strong>Technologies and methods:</strong> PostgreSQL 16, SQL, Python, pandas,
+        scikit-learn, relational modeling, window functions, time-aware feature
+        engineering, probability calibration, threshold analysis, and accessible
+        data visualization.
+      </p>
+      <details>
+        <summary>Technical note: consistent analytical definitions</summary>
+        <p>
+          SQL defines the analytical contract, meaning that key metrics, table grains,
+          and weekly records are created through consistent, reviewable definitions
+          rather than being recalculated differently for each chart. The project
+          includes six database schemas, materialized analysis tables, indexes,
+          captured query plans, and twenty-four quality profiles and tests.
+        </p>
+      </details>
+      <div class="closing-links">
+        <a class="button-link" href="https://github.com/FollowingJCABIC/learning-analytics-oulad/blob/main/docs/sql-mastery.md">
+          Read the SQL design
+        </a>
+        <a class="button-link" href="https://github.com/FollowingJCABIC/learning-analytics-oulad/blob/main/sql/gallery/queries.sql">
+          Open the SQL query gallery
+        </a>
+        <a class="button-link" href="https://github.com/FollowingJCABIC/learning-analytics-oulad/blob/main/docs/model-card.md">
+          Read the model card
+        </a>
+      </div>
+    </section>
+
+    <section class="section limits shell" id="limits" aria-labelledby="limits-title">
+      <div class="section-head">
+        <p class="eyebrow">Responsible interpretation</p>
+        <h2 id="limits-title">What this analysis cannot tell us</h2>
+        <p>
+          <strong>Clicks are traces, not explanations.</strong> The project preserves
+          uncertainty because the records omit much of the context needed to understand
+          any individual experience.
+        </p>
+      </div>
+      <ul class="limits-grid">
+        <li>The anonymized data covers selected Open University courses from 2013-2014.</li>
+        <li>Platform clicks do not directly measure learning, attention, or motivation.</li>
+        <li>Students may study offline or use resources not represented in the records.</li>
+        <li>Reasons for withdrawal are not fully represented in the dataset.</li>
+        <li>Course differences may reflect design, deadlines, policy, or recording practice.</li>
+        <li>Historical associations do not establish that one behavior caused an outcome.</li>
+        <li>Results may not generalize to other years, institutions, or course structures.</li>
+        <li>The forecasts should not be used as an automated decision system.</li>
+        <li>
+          Predictions are not statements about character, intelligence, motivation,
+          ability, or potential.
+        </li>
+        <li>
+          Fairness in another setting would require local validation, governance, and
+          meaningful participation from affected people.
+        </li>
+      </ul>
+    </section>
+
+    <section class="section shell" id="skills" aria-labelledby="skills-title">
+      <div class="section-head">
+        <p class="eyebrow">Professional relevance</p>
+        <h2 id="skills-title">What this project demonstrates</h2>
+        <p>
+          The value of the project is not only the final model. It is the complete,
+          reviewable process from a large relational source to a careful public
+          explanation.
+        </p>
+      </div>
+      <ul class="skills-list">
+        <li>Translating a complex relational dataset into usable analytical tables</li>
+        <li>Designing reproducible PostgreSQL and SQL data pipelines</li>
+        <li>Conducting exploratory and statistical analysis</li>
+        <li>Creating weekly, time-aware forecasting features</li>
+        <li>Preventing future information from leaking into model training</li>
+        <li>Evaluating ranking, probability quality, thresholds, and timing</li>
+        <li>Communicating uncertainty, responsible-use limits, and negative results</li>
+        <li>Presenting one analysis to both technical and nontechnical audiences</li>
+      </ul>
+    </section>
+
+    <section class="section section-alt shell" id="glossary" aria-labelledby="glossary-title">
+      <div class="section-head">
+        <p class="eyebrow">Plain-language reference</p>
+        <h2 id="glossary-title">Terms used on this page</h2>
+      </div>
+      <details class="glossary">
+        <summary>Open the compact glossary</summary>
+        <dl class="terms">
+          <dt>OULAD</dt>
+          <dd>The Open University Learning Analytics Dataset, an anonymized historical dataset.</dd>
+          <dt>Course or module</dt>
+          <dd>A course. OULAD uses the term module.</dd>
+          <dt>Course offering</dt>
+          <dd>One course delivered in one period. OULAD calls this a presentation.</dd>
+          <dt>Course attempt</dt>
+          <dd>One student taking one course offering. A student can have multiple attempts.</dd>
+          <dt>Online activity or click</dt>
+          <dd>
+            A recorded interaction with the online learning platform, not a measure
+            of attention.
+          </dd>
+          <dt>Weekly snapshot</dt>
+          <dd>A record of information available at the end of a particular course week.</dd>
+          <dt>Forecast target</dt>
+          <dd>The event being estimated: a missing or below-40 next non-exam assessment.</dd>
+          <dt>Held-out test data</dt>
+          <dd>Later course offerings kept unseen until the final model evaluation.</dd>
+          <dt>Precision</dt>
+          <dd>The share of flagged weekly records that later became target events.</dd>
+          <dt>Recall</dt>
+          <dd>The share of all target events that the chosen cutoff flagged.</dd>
+          <dt>Precision-recall AUC</dt>
+          <dd>A summary of how well the model ranks target events above other records.</dd>
+          <dt>Brier score</dt>
+          <dd>A measure of predicted-probability error. Lower values are better.</dd>
+          <dt>Calibration</dt>
+          <dd>Agreement between predicted probabilities and observed event rates.</dd>
+          <dt>Threshold</dt>
+          <dd>The probability cutoff above which a weekly record would be flagged.</dd>
+          <dt>False alarm</dt>
+          <dd>A flagged record for which the target event did not occur.</dd>
+          <dt>Missed case</dt>
+          <dd>A target event that fell below the chosen probability cutoff.</dd>
+        </dl>
+      </details>
     </section>
   </main>
-  <footer>Generated from versioned SQL marts and saved Python outputs.</footer>
+
+  <footer>
+    <div class="shell">
+      <p>
+        Generated from versioned PostgreSQL analysis tables and saved Python outputs.
+        Source, tests, and complete methodology are available in the
+        <a href="https://github.com/FollowingJCABIC/learning-analytics-oulad">public project repository</a>.
+      </p>
+    </div>
+  </footer>
 </body>
 </html>
