@@ -1,0 +1,15 @@
+{
+  "target": "next assessment is missing by its due day or receives a score below 40",
+  "train": [
+    "2013B",
+    "2013J"
+  ],
+  "validation": [
+    "2014B"
+  ],
+  "test": [
+    "2014J"
+  ],
+  "rule_inactivity_threshold_days": 5.0,
+  "random_seed": 20260723
+}

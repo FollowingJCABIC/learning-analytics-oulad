@@ -1,0 +1,5 @@
+case_name,variant,captured_at,execution_time_ms,top_plan_node,actual_rows
+model_snapshots,generated_range_join_aaa,2026-07-23 11:31:49.246584-07,68.965,Aggregate,9201
+model_snapshots,materialized_snapshot_scan_aaa,2026-07-23 11:31:49.323728-07,10.500,Bitmap Heap Scan,9201
+weekly_engagement,materialized_weekly_mart,2026-07-23 11:31:49.038645-07,197.505,Aggregate,286
+weekly_engagement,raw_fact_aggregation,2026-07-23 11:31:45.459286-07,3563.163,Aggregate,243924

@@ -1,0 +1,7 @@
+model,true_negative,false_positive,false_negative,true_positive
+prevalence_baseline,92462,0,24724,0
+sql_rule_baseline,40506,51956,5558,19166
+logistic_regression,74420,18042,9145,15579
+decision_tree,66700,25762,6677,18047
+gradient_boosted_tree,85453,7009,13674,11050
+calibrated_logistic_regression,85980,6482,14305,10419

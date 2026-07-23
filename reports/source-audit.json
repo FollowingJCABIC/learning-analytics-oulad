@@ -1,0 +1,140 @@
+{
+  "source": "UCI Machine Learning Repository, dataset 349",
+  "download_url": "https://archive.ics.uci.edu/dataset/349/open+university+learning+analytics+dataset",
+  "files": [
+    {
+      "file": "assessments.csv",
+      "rows": 206,
+      "columns": 6,
+      "column_names": [
+        "code_module",
+        "code_presentation",
+        "id_assessment",
+        "assessment_type",
+        "date",
+        "weight"
+      ],
+      "missing_cells": {
+        "date": 11
+      },
+      "sha256": "9ce92381e4a0ac457f8e251b2eb2c179ed51e023ab30d1d671a0268bd62316ba"
+    },
+    {
+      "file": "courses.csv",
+      "rows": 22,
+      "columns": 3,
+      "column_names": [
+        "code_module",
+        "code_presentation",
+        "module_presentation_length"
+      ],
+      "missing_cells": {},
+      "sha256": "4f16eee7454b15e109b0a21a0e43be820e6846ed6f9301bb7feb5ab5ad737a75"
+    },
+    {
+      "file": "studentAssessment.csv",
+      "rows": 173912,
+      "columns": 5,
+      "column_names": [
+        "id_assessment",
+        "id_student",
+        "date_submitted",
+        "is_banked",
+        "score"
+      ],
+      "missing_cells": {
+        "score": 173
+      },
+      "sha256": "b1839e17618a5de36b6d189a242d3123f7939a56c8c9ccef0c17b9199c614a6b"
+    },
+    {
+      "file": "studentInfo.csv",
+      "rows": 32593,
+      "columns": 12,
+      "column_names": [
+        "code_module",
+        "code_presentation",
+        "id_student",
+        "gender",
+        "region",
+        "highest_education",
+        "imd_band",
+        "age_band",
+        "num_of_prev_attempts",
+        "studied_credits",
+        "disability",
+        "final_result"
+      ],
+      "missing_cells": {
+        "imd_band": 1111
+      },
+      "sha256": "815fbc3e2de29f79900bc63f0345a35db62c9146afaa1d86e7107b8b3beffc60"
+    },
+    {
+      "file": "studentRegistration.csv",
+      "rows": 32593,
+      "columns": 5,
+      "column_names": [
+        "code_module",
+        "code_presentation",
+        "id_student",
+        "date_registration",
+        "date_unregistration"
+      ],
+      "missing_cells": {
+        "date_unregistration": 22521,
+        "date_registration": 45
+      },
+      "sha256": "bbc87a0de1fe2a9ec6decce1ca6c1a02cf17b54ad3bdcc673fc6413b41c61d47"
+    },
+    {
+      "file": "studentVle.csv",
+      "rows": 10655280,
+      "columns": 6,
+      "column_names": [
+        "code_module",
+        "code_presentation",
+        "id_student",
+        "id_site",
+        "date",
+        "sum_click"
+      ],
+      "missing_cells": {},
+      "sha256": "52668253d876c5becbcb72185977152700cecab2942aca807fecc3dd54b937f0"
+    },
+    {
+      "file": "vle.csv",
+      "rows": 6364,
+      "columns": 6,
+      "column_names": [
+        "id_site",
+        "code_module",
+        "code_presentation",
+        "activity_type",
+        "week_from",
+        "week_to"
+      ],
+      "missing_cells": {
+        "week_from": 5243,
+        "week_to": 5243
+      },
+      "sha256": "d7a146497edd0e47ef536144b58796c07b554002d3753e848b8e4cd8a56f4c38"
+    }
+  ],
+  "calculated_scale": {
+    "csv_rows": 10900970,
+    "unique_students": 28785,
+    "student_module_attempts": 32593,
+    "modules": 7,
+    "module_presentations": 22,
+    "assessments": 206,
+    "activity_records": 10655280
+  },
+  "observed_anomalies": {
+    "student_attempt_duplicates": 0,
+    "registration_attempt_duplicates": 0,
+    "missing_imd_band": 1111,
+    "missing_assessment_due_dates": 11,
+    "missing_unregistration_dates": 22521
+  }
+}

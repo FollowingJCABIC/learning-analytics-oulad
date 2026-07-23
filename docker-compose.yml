@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: learning_analytics
+      POSTGRES_USER: learning_analytics
+      POSTGRES_PASSWORD: learning_analytics
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U learning_analytics -d learning_analytics"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - learning_analytics_pgdata:/var/lib/postgresql/data
+
+volumes:
+  learning_analytics_pgdata:

@@ -1,0 +1,25 @@
+run_at,check_name,severity,failing_rows,status,detail
+2026-07-23 11:46:21.316912-07,activity_without_resources,error,0,pass,Interaction site must exist in the same module-presentation.
+2026-07-23 11:46:21.316912-07,duplicate_assessment_submissions,error,0,pass,Submission key is assessment and student.
+2026-07-23 11:47:58.915719-07,duplicate_model_snapshots,error,0,pass,"Snapshot grain is module, presentation, student, and course week."
+2026-07-23 11:46:21.316912-07,duplicate_student_attempts,error,0,pass,"Natural key is module, presentation, student."
+2026-07-23 11:47:58.915719-07,future_information_in_snapshots,error,0,pass,Latest source activity used by a feature must be at or before the snapshot.
+2026-07-23 11:46:21.316912-07,invalid_assessment_weights,error,0,pass,Assessment weights must be between zero and 100.
+2026-07-23 11:46:21.316912-07,invalid_final_results,error,0,pass,"Accepted final results are Distinction, Pass, Fail, and Withdrawn."
+2026-07-23 11:47:58.915719-07,invalid_model_targets,error,0,pass,The next-assessment event is binary and must refer to a later due day.
+2026-07-23 11:46:21.316912-07,invalid_score_ranges,error,0,pass,Recorded scores must be between zero and 100.
+2026-07-23 11:47:58.915719-07,invalid_snapshot_dates,error,0,pass,Model snapshots cover nonnegative course weeks zero through twelve.
+2026-07-23 11:46:21.316912-07,negative_click_counts,error,0,pass,Click count cannot be negative.
+2026-07-23 11:46:21.316912-07,orphan_assessments,error,0,pass,Every assessment must map to a module-presentation.
+2026-07-23 11:46:21.316912-07,orphan_submissions,error,0,pass,Every submission must map to an assessment.
+2026-07-23 11:46:21.316912-07,registration_after_unregistration,error,0,pass,Unregistration cannot precede registration.
+2026-07-23 11:46:21.316912-07,registrations_without_attempts,error,0,pass,Registration rows require a matching student attempt.
+2026-07-23 11:46:20.360072-07,source_activity_row_count,error,0,pass,Calculated from the downloaded 2015 UCI archive.
+2026-07-23 11:46:20.360072-07,source_courses_row_count,error,0,pass,Official archive should contain 22 module-presentation rows.
+2026-07-23 11:46:20.360072-07,source_student_info_row_count,error,0,pass,Calculated from the downloaded 2015 UCI archive.
+2026-07-23 11:46:21.316912-07,activity_before_course_start,informational,688988,profile,Negative activity days are legitimate pre-course interactions and excluded from model weeks.
+2026-07-23 11:46:21.316912-07,missing_assessment_due_dates,informational,11,profile,Exam dates are often absent and are excluded from next-assessment targets.
+2026-07-23 11:46:21.316912-07,missing_imd_band,informational,1111,profile,Profile known missing area deprivation bands; do not impute without documentation.
+2026-07-23 11:46:21.316912-07,activity_without_attempts,warning,0,pass,Early or retained activity may exist outside the studentInfo attempt set.
+2026-07-23 11:46:21.316912-07,unexpected_module_codes,warning,0,pass,Archive is documented as seven anonymized modules AAA through GGG.
+2026-07-23 11:46:21.316912-07,unexpected_presentation_codes,warning,0,pass,"Presentations should be 2013B, 2013J, 2014B, or 2014J."
