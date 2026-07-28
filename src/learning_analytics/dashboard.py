@@ -512,9 +512,22 @@ def build_dashboard(settings: Settings) -> None:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta
     name="description"
-    content="Jose Chavez explains what he learned from a careful study of online-course records."
+    content="Full learning analytics evidence and model evaluation for Jose Chavez's OULAD project."
   >
-  <title>What I Learned from Online-Course Records | Jose Chavez</title>
+  <meta property="og:title" content="Learning Analytics: Full Analysis | Jose Chavez">
+  <meta
+    property="og:description"
+    content="Complete OULAD evidence, weekly definitions, and temporal model evaluation."
+  >
+  <meta
+    property="og:url"
+    content="https://website-react-fbd.vercel.app/dashboards/learning-analytics/full-analysis"
+  >
+  <link
+    rel="canonical"
+    href="https://website-react-fbd.vercel.app/dashboards/learning-analytics/full-analysis"
+  >
+  <title>Learning Analytics: Full Analysis | Jose Chavez</title>
   <style>
     :root {
       color-scheme: light;
@@ -1418,24 +1431,23 @@ def build_dashboard(settings: Settings) -> None:
   </style>
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Skip to my findings</a>
+  <a class="skip-link" href="#main-content">Skip to the full analysis</a>
 
-  <nav class="project-bar" aria-label="Ways to explore this project">
+  <nav class="project-bar" aria-label="Portfolio and project links">
     <div class="shell">
       <a class="project-name" href="/#/data-science/learning-analytics">
-        Jose Chavez / My Learning Analytics Project
+        Jose Chavez · Data Science Portfolio
       </a>
       <div class="project-links">
-        <a href="/#/data-science/learning-analytics">Read my project story</a>
-        <a href="$repository">See the files on GitHub</a>
-        <a href="$repository/blob/main/docs/methodology.md">Read my method notes</a>
+        <a href="/#/data-science/learning-analytics">Back to project overview</a>
+        <a href="$repository">Code and documentation</a>
       </div>
     </div>
   </nav>
 
   <header class="hero">
     <div class="shell">
-      <p class="eyebrow">Learning Analytics</p>
+      <p class="eyebrow">Learning Analytics · Full analysis</p>
       <h1>Disengagement showed up before the course was over.</h1>
       <p class="hero-intro">
         I worked with real, anonymous Open University records to understand when
@@ -1445,7 +1457,7 @@ def build_dashboard(settings: Settings) -> None:
         before the course ended. The records showed when concern might be worth a closer
         look, but they could not explain why a student struggled.
       </p>
-      <nav class="page-nav" aria-label="Parts of my project story">
+      <nav class="page-nav" aria-label="Full analysis sections">
         <ul>
           <li><a href="#key-findings">What I found</a></li>
           <li><a href="#questions">What I asked</a></li>
@@ -1924,8 +1936,8 @@ def build_dashboard(settings: Settings) -> None:
     <div class="shell">
       <p>
         This page uses the same PostgreSQL tables and saved Python results as the
-        analysis. You can read my source files, tests, and full method in
-        the <a href="$repository">public project repository</a>.
+        analysis. You can inspect the SQL, Python, tests, and reproduction instructions
+        in the <a href="$repository">code and documentation</a>.
       </p>
       <nav class="footer-links" aria-label="Contact Jose Chavez">
         <a href="https://www.linkedin.com/in/jose-chavez-79841a1b4/">LinkedIn</a>

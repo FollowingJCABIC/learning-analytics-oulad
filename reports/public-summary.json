@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "slug": "learning-analytics",
+  "title": "Learning Analytics: Engagement, Assessment, and Outcome Forecasting",
+  "question": "Can weekly course records identify an upcoming assessment problem early enough for a person to review the situation and offer support?",
+  "answer": "A time-safe next-assessment forecast found a useful but limited signal: at the reviewed threshold, about 62% of alerts were correct and 42% of actual assessment problems were found, with a median 26 days before the due date.",
+  "conclusion": "Earlier assessment history carried the clearest predictive information, while recent participation added timing and context. The result may support a carefully governed human review process, but it does not justify an automatic decision about a student.",
+  "data": {
+    "source": "Open University Learning Analytics Dataset (OULAD), UCI Machine Learning Repository dataset 349",
+    "period": "2013–2014 course presentations",
+    "population": "32,593 anonymized student-course attempts across 22 course presentations",
+    "analyticalUnit": "One weekly snapshot for one student-course attempt with an upcoming non-exam assessment and known due date"
+  },
+  "keyFacts": [
+    {
+      "id": "course_attempts",
+      "value": 32593,
+      "display": "32,593",
+      "population": "student-course attempts in OULAD"
+    },
+    {
+      "id": "test_snapshots",
+      "value": 117186,
+      "display": "117,186",
+      "population": "eligible weekly snapshots in the later 2014J test period"
+    },
+    {
+      "id": "test_positive_snapshots",
+      "value": 24724,
+      "display": "24,724",
+      "population": "2014J snapshots whose next assessment was missing by its due date or scored below 40"
+    },
+    {
+      "id": "test_prevalence",
+      "value": 0.2109808338880071,
+      "display": "21.1%",
+      "population": "eligible weekly snapshots in the later 2014J test period"
+    },
+    {
+      "id": "selected_precision",
+      "value": 0.6164723980829536,
+      "display": "61.6%",
+      "population": "weekly snapshots flagged at the reviewed 0.50 threshold"
+    },
+    {
+      "id": "selected_recall",
+      "value": 0.42141239281669635,
+      "display": "42.1%",
+      "population": "actual next-assessment problems in the later 2014J test period"
+    },
+    {
+      "id": "selected_flag_rate",
+      "value": 0.1442237127301896,
+      "display": "14.4%",
+      "population": "eligible weekly snapshots in the later 2014J test period"
+    },
+    {
+      "id": "median_lead_days",
+      "value": 26,
+      "display": "26 days",
+      "population": "correct alerts at the reviewed 0.50 threshold"
+    },
+    {
+      "id": "withdrawal_model_pr_auc",
+      "value": 0.08225078730776324,
+      "display": "0.082 PR AUC",
+      "population": "later 2014J weekly snapshots in the separate 28-day withdrawal investigation"
+    }
+  ],
+  "target": {
+    "definition": "next assessment is missing by its due day or receives a score below 40",
+    "exclusions": "Exams are excluded because their due dates are often unavailable in OULAD."
+  },
+  "selectedModel": {
+    "name": "calibrated logistic regression",
+    "reviewedThreshold": 0.5,
+    "testPrAuc": 0.5939497869924096,
+    "testBrier": 0.1297496614147775
+  },
+  "tools": [
+    "PostgreSQL",
+    "SQL",
+    "Python",
+    "temporal evaluation",
+    "calibration",
+    "responsible modeling"
+  ],
+  "limitation": "Platform clicks do not measure learning or motivation, historical associations do not explain why a student struggled, and the forecast has not been prospectively validated for operational use.",
+  "urls": {
+    "overview": "https://website-react-fbd.vercel.app/#/data-science/learning-analytics",
+    "fullAnalysis": "https://website-react-fbd.vercel.app/dashboards/learning-analytics/full-analysis",
+    "repository": "https://github.com/FollowingJCABIC/learning-analytics-oulad",
+    "technicalMethods": "https://github.com/FollowingJCABIC/learning-analytics-oulad/blob/main/docs/methodology.md"
+  }
+}
+

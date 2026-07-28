@@ -21,9 +21,17 @@ calibrated logistic model's alerts were correct 61.6% of the time and found
 choose which records to review, but it missed more than half of the actual
 cases and should not make an automatic decision about a student.
 
-[SQL gallery](sql/gallery/queries.sql) | [Methodology](docs/methodology.md) |
-[Forecast evaluation](docs/forecast-evaluation.md) | [Dashboard](dashboard/index.html) |
-[Project walkthrough](docs/project-walkthrough.md)
+## Public project journey
+
+- [Project overview](https://website-react-fbd.vercel.app/#/data-science/learning-analytics)
+- [Full analysis](https://website-react-fbd.vercel.app/dashboards/learning-analytics/full-analysis)
+- [Technical methods](docs/methodology.md)
+- [SQL gallery](sql/gallery/queries.sql)
+- [Analysis walkthrough](docs/project-walkthrough.md)
+
+`reports/public-summary.json` owns the verified facts shared with the central
+portfolio. The portfolio build validates that snapshot against the executed
+source audit, model metrics, threshold analysis, and withdrawal-model results.
 
 ## Three findings
 
@@ -92,7 +100,7 @@ SQL quality checks, analytical marts, weekly snapshots
 Python analysis, visualizations, modeling, calibration
     |
     v
-Reports and focused static dashboard
+Reports and focused static full analysis
 ```
 
 The way I connected and organized the tables is documented in
@@ -122,7 +130,7 @@ The way I connected and organized the tables is documented in
   logistic regression, a constrained decision tree, and a boosted challenger.
 - Complete-presentation temporal splits, probability calibration, threshold
   analysis, subgroup diagnostics, and saved model artifacts.
-- Programmatic, accessible charts and a generated static dashboard.
+- Programmatic, accessible charts and a generated static full analysis.
 
 ## Forecast definition
 
