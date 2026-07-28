@@ -555,6 +555,101 @@
       color: var(--muted);
     }
 
+    .model-definition,
+    .model-role-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin: 34px 0 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .model-definition div,
+    .model-role-summary div {
+      min-width: 0;
+      padding: 18px 22px 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .model-definition div:nth-child(2n),
+    .model-role-summary div:nth-child(2n) {
+      padding-right: 0;
+      padding-left: 22px;
+      border-left: 1px solid var(--line);
+    }
+
+    .model-definition dt {
+      color: var(--blue-dark);
+      font-size: 0.74rem;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .model-definition dd,
+    .model-role-summary p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .model-family-guide {
+      margin-top: 36px;
+    }
+
+    .model-family-guide h3 {
+      margin: 0;
+    }
+
+    .model-family-guide ol {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 38px;
+      margin: 18px 0 0;
+      padding: 0;
+      border-top: 1px solid var(--line);
+      list-style: none;
+    }
+
+    .model-family-guide li {
+      padding: 15px 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.58;
+    }
+
+    .model-family-guide li strong,
+    .model-family-guide li span {
+      color: var(--ink);
+    }
+
+    .model-family-guide li span {
+      display: block;
+      margin-top: 3px;
+    }
+
+    .model-role-summary strong {
+      color: var(--blue-dark);
+      font-size: 0.86rem;
+    }
+
+    .model-guardrails {
+      max-width: 900px;
+      margin-top: 28px;
+      padding-left: 20px;
+      border-left: 4px solid var(--coral);
+    }
+
+    .model-guardrails p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.62;
+    }
+
+    .model-guardrails p + p {
+      margin-top: 10px;
+    }
+
     .evaluation-flow,
     .method-flow {
       display: grid;
@@ -886,11 +981,20 @@
       .finding-summary,
       .summary-findings,
       .evaluation-flow,
+      .model-definition,
+      .model-family-guide ol,
+      .model-role-summary,
       .model-summary,
       .limits-grid,
       .skills-list,
       .terms {
         grid-template-columns: 1fr;
+      }
+
+      .model-definition div:nth-child(2n),
+      .model-role-summary div:nth-child(2n) {
+        padding-left: 0;
+        border-left: 0;
       }
 
       .question-list li {
@@ -1019,8 +1123,8 @@
             <p>
               In the later test, <strong>24,724 of 117,186 weekly
               snapshots (21.1%)</strong> were followed by a missing or
-              below-40 next assessment. At a 50% cutoff, the calibrated logistic
-              model's alerts were correct <strong>61.6%</strong> of the
+              below-40 next assessment. At a 50% cutoff, calibrated logistic
+              regression alerts were correct <strong>61.6%</strong> of the
               time and found <strong>42.1%</strong> of the actual cases.
             </p>
             <p>
@@ -1073,7 +1177,7 @@
         <li>Did missing work and submission timing look the same in every course?</li>
         <li>What happened to recorded activity before a withdrawal?</li>
         <li>Could the information available so far help me forecast the next assessment?</li>
-        <li>When the model gave a probability, how much could I trust it?</li>
+        <li>When a forecast gave a probability, how much could I trust it?</li>
       </ol>
     </section>
 
@@ -1274,7 +1378,7 @@
         <p>
           At the end of a course week, I used the information available so far to
           estimate whether one student's next non-exam assessment would be missing by
-          its due date or receive a score below 40. The model could help an instructor
+          its due date or receive a score below 40. The forecast could help an instructor
           decide which recent records to review, but it was not reliable enough to
           label a student or make an automatic decision.
         </p>
@@ -1284,10 +1388,65 @@
         <h3>One weekly snapshot was one student in one course attempt</h3>
         <p>
           I included a snapshot only when that student had an upcoming non-exam
-          assessment with a known due date. I gave the model only the activity,
+          assessment with a known due date. I gave the predictive methods only the activity,
           submissions, and assessment results that could have been known by the end
           of that week. Later activity and future results stayed out of the inputs.
         </p>
+      </div>
+
+      <dl class="model-definition">
+        <div>
+          <dt>Exact outcome</dt>
+          <dd>Whether the next non-exam assessment with a known due date would be missing by that date or receive a score below 40.</dd>
+        </div>
+        <div>
+          <dt>When I made the estimate</dt>
+          <dd>At the end of each course week, before the next eligible assessment was due.</dd>
+        </div>
+        <div>
+          <dt>One observation</dt>
+          <dd>One weekly snapshot for one student in one course attempt.</dd>
+        </div>
+        <div>
+          <dt>Information available</dt>
+          <dd>Recent and cumulative platform activity, prior submissions and scores known by that week, already-missing assessments, progress, and course context; demographic fields were not used.</dd>
+        </div>
+      </dl>
+
+      <div class="model-family-guide">
+        <h3>I compared six approaches for six different reasons</h3>
+        <ol>
+          <li>
+            <strong>Prevalence baseline.</strong>
+            It gave every weekly snapshot the same event rate seen in the training courses.
+            <span>It set the minimum no-personalization reference.</span>
+          </li>
+<li>
+            <strong>SQL rule baseline.</strong>
+            It used fixed checks for inactivity, earlier missing work, or declining engagement.
+            <span>It provided a transparent rule-based comparison.</span>
+          </li>
+<li>
+            <strong>Regularized logistic regression.</strong>
+            It combined the available measures into an additive score while shrinking unstable coefficients.
+            <span>It provided an inspectable statistical reference.</span>
+          </li>
+<li>
+            <strong>Constrained decision tree.</strong>
+            It used a short sequence of if-then splits.
+            <span>It tested a simple nonlinear alternative that a person could still inspect.</span>
+          </li>
+<li>
+            <strong>Gradient-boosted decision trees.</strong>
+            They built many shallow trees in sequence so later trees could correct earlier errors.
+            <span>They tested whether interactions and nonlinear patterns improved ranking.</span>
+          </li>
+<li>
+            <strong>Calibrated logistic regression.</strong>
+            It adjusted the logistic regression probabilities using the 2014B validation courses.
+            <span>It provided an inspectable probability and workload reference for the alert example.</span>
+          </li>
+        </ol>
       </div>
 
       <div class="evaluation-flow" aria-label="Model evaluation sequence">
@@ -1316,13 +1475,38 @@
         score look better than it really was.
       </p>
 
-      <div class="model-summary" aria-label="Interpretable model summary">
+      <div class="model-role-summary" aria-label="Distinct model roles">
+        <div>
+          <strong>Strongest ranking</strong>
+          <p>Gradient-boosted decision trees ranked the later 2014J cases best, with precision-recall AUC 0.642.</p>
+        </div>
+        <div>
+          <strong>Most accurate probabilities</strong>
+          <p>Gradient-boosted decision trees also had the lowest later-test Brier score, 0.123; lower probability error is better.</p>
+        </div>
+        <div>
+          <strong>Worked cutoff example</strong>
+          <p>The worked 0.50 cutoff used calibrated logistic regression: it flagged 14.4% of 117,186 later-test weekly snapshots, with 61.6% precision, 42.1% recall, and a median 26-day lead for correct alerts.</p>
+        </div>
+        <div>
+          <strong>Reference I retained</strong>
+          <p>Calibrated logistic regression remains the recommended inspectable reference, not the top-scoring model.</p>
+        </div>
+      </div>
+      <div class="model-guardrails">
+        <p><strong>How I chose:</strong> I valued coefficients, preprocessing, probability adjustment, and cutoff behavior that another analyst could inspect. Predictive performance mattered, but it was not the only criterion because the score would affect human review workload and potentially sensitive outreach.</p>
+        <p><strong>Demonstrated use:</strong> The result demonstrates retrospective prioritization on later historical courses. It has not been prospectively validated or used in an operational support process.</p>
+        <p><strong>Never use it to:</strong> The output should never automatically grade, admit, discipline, rank, surveil, or deny an opportunity to a student, and it should never be treated as a measure of intelligence, motivation, effort, or need.</p>
+      </div>
+
+      <div class="model-summary" aria-label="Calibrated logistic regression summary">
         <div>
           <strong>0.594</strong>
-          <span>How well the model ranked upcoming events</span>
+          <span>How well calibrated logistic regression ranked upcoming events</span>
           <p>
             Higher is better and 1.0 would be perfect. My basic comparison score was
-            0.211. The model improved on it, but was far from perfect.
+            0.211. Calibrated logistic regression improved on it, but was far
+            from perfect.
           </p>
         </div>
         <div>
@@ -1340,20 +1524,20 @@
         <div class="chart-copy">
           <p class="eyebrow">Model comparison</p>
           <h3>The models found a pattern, but not a certain answer</h3>
-          <p class="takeaway">The boosted model ranked the upcoming assessment cases best at 0.642, compared with a no-model reference of 0.211.</p>
-          <p>The calibrated logistic model scored 0.594. I used it for the alert example because its probabilities, contributing factors, and cutoff behavior were easier to explain and check. The boosted model remains the stronger ranking challenger.</p>
+          <p class="takeaway">Gradient-boosted decision trees ranked the upcoming assessment cases best at 0.642, compared with a prevalence reference of 0.211.</p>
+          <p>Calibrated logistic regression scored 0.594. I used it for the alert example because its probabilities, contributing factors, and cutoff behavior were easier to explain and check. Gradient-boosted decision trees remain the stronger ranking comparison.</p>
           <p class="interpretation-note">
-            <strong>What I would not assume:</strong> Neither model explains why an assessment was missing or below 40. A forecast should prompt a person to review the recent record, not label a student or make an automatic decision.
+            <strong>What I would not assume:</strong> Neither predictive method explains why an assessment was missing or below 40. A forecast should prompt a person to review the recent record, not label a student or make an automatic decision.
           </p>
           <details class="technical-note">
             <summary>How I worked this out</summary>
-            <p>I used precision-recall AUC to summarize how well each model ranks weekly snapshots followed by a missing or below-40 next assessment above the other snapshots. A score of 1.0 would be perfect. The event rate is the no-model reference.</p>
+            <p>I used precision-recall AUC to summarize how well each model ranks weekly snapshots followed by a missing or below-40 next assessment above the other snapshots. A score of 1.0 would be perfect. The event rate is the prevalence reference.</p>
           </details>
         </div>
         <figure>
           <img
             src="assets/model_overview.png"
-            alt="Three-bar comparison of later-test precision-recall AUC, where higher is better. The no-model event-rate reference is 0.211, the calibrated logistic model is 0.594, and the boosted challenger is 0.642."
+            alt="Three-bar comparison of later-test precision-recall AUC, where higher is better. The prevalence reference is 0.211, calibrated logistic regression is 0.594, and gradient-boosted decision trees are 0.642."
             loading="lazy"
             decoding="async"
           >
@@ -1364,10 +1548,10 @@
         <div class="chart-copy">
           <p class="eyebrow">Probability quality</p>
           <h3>Then I checked whether the probabilities were believable</h3>
-          <p class="takeaway">The lower predictions were fairly close to what happened, but the model overstated the rate for the highest group.</p>
-          <p>In that highest group, the average prediction was 85% and the actual event rate was 70%. The simple question I was asking was: when the model says 30%, does something close to 30% actually happen?</p>
+          <p class="takeaway">The lower predictions were fairly close to what happened, but calibrated logistic regression overstated the rate for the highest group.</p>
+          <p>In that highest group, the average prediction was 85% and the actual event rate was 70%. The simple question I was asking was: when this method says 30%, does something close to 30% actually happen?</p>
           <p class="interpretation-note">
-            <strong>What I would not assume:</strong> A model can put records in a useful order while still giving imperfect probabilities. I had to check both.
+            <strong>What I would not assume:</strong> A predictive method can put records in a useful order while still giving imperfect probabilities. I had to check both.
           </p>
           <details class="technical-note">
             <summary>How I worked this out</summary>
@@ -1405,15 +1589,15 @@
             loading="lazy"
             decoding="async"
           >
-          <figcaption>The cutoff controls how many records the model would flag.</figcaption>
+          <figcaption>The cutoff controls how many records calibrated logistic regression would flag.</figcaption>
         </figure>
       </article>
 <article class="chart-slide chart-slide-reverse" id="forecast-timing">
         <div class="chart-copy">
           <p class="eyebrow">Forecast timing</p>
           <h3>I also had to decide how early to make the forecast</h3>
-          <p class="takeaway">Later weeks usually gave the model more useful information, but a later forecast would leave less time to respond.</p>
-          <p>Early in a course, I had very little activity or assessment history to work with. Waiting gave the model a fuller record, but it also reduced the value of an early warning.</p>
+          <p class="takeaway">Later weeks usually gave the predictive methods more useful information, but a later forecast would leave less time to respond.</p>
+          <p>Early in a course, I had very little activity or assessment history to work with. Waiting gave the predictive methods a fuller record, but it also reduced the value of an early warning.</p>
           <p class="interpretation-note">
             <strong>What I would not assume:</strong> I only tested this pattern on the later 2014J offerings that were not used during model development. It could change in another year, institution, or kind of course.
           </p>
@@ -1433,13 +1617,13 @@
       <article class="forecast-negative" aria-labelledby="withdrawal-model-title">
         <p class="eyebrow">A separate experiment</p>
         <h3 id="withdrawal-model-title">
-          The withdrawal model produced too many false alerts for individual use.
+          The 28-day logistic regression forecast produced too many false alerts for individual use.
         </h3>
         <p>
           I separately tested whether the same kind of weekly snapshot could identify
           a recorded withdrawal within the next 28 days. In the later 2014J test
           records, withdrawal occurred after only <strong>3.9%</strong>
-          of the snapshots. The model flagged <strong>30.3%</strong>
+          of the snapshots. Logistic regression flagged <strong>30.3%</strong>
           of all snapshots, but only <strong>8.0%</strong> of its
           alerts were correct. It found <strong>61.7%</strong> of the
           withdrawals that did occur, but the large number of false alerts made the
@@ -1462,8 +1646,9 @@
             decoding="async"
           >
           <figcaption>
-            The overview chart shows the no-model reference, calibrated logistic
-            model, and boosted challenger. This chart preserves every comparison.
+            The overview chart shows the prevalence reference, calibrated logistic
+            regression, and gradient-boosted decision trees. This chart preserves
+            every comparison.
           </figcaption>
         </figure>
       </details>
@@ -1568,7 +1753,7 @@
         <p class="eyebrow">What I learned by doing it</p>
         <h2 id="skills-title">This project made me connect the whole process</h2>
         <p>
-          The model was only one part of the work. The real challenge was staying with
+          Forecasting was only one part of the work. The real challenge was staying with
           the same question from the messy original files through the database,
           analysis, testing, and explanation.
         </p>
@@ -1580,7 +1765,7 @@
           manual steps.
         </li>
         <li>I built the forecast one week at a time without letting future information slip in.</li>
-        <li>I tested the model's ranking, probabilities, cutoffs, and timing separately.</li>
+        <li>I tested the forecast's ranking, probabilities, cutoffs, and timing separately.</li>
         <li>
           I learned to explain a useful result without pretending it was more
           certain than it was.
@@ -1612,16 +1797,19 @@
           <dt>Weekly snapshot</dt>
           <dd>The information I could have known at the end of one course week.</dd>
           <dt>Forecast target</dt>
-          <dd>What I asked the model to estimate: a missing or below-40 next assessment.</dd>
+          <dd>
+            What I asked the predictive methods to estimate: a missing or below-40
+            next assessment.
+          </dd>
           <dt>Later test data</dt>
-          <dd>Later course offerings I did not use until the final model test.</dd>
+          <dd>Later course offerings I did not use until the final forecast test.</dd>
           <dt>Precision</dt>
           <dd>Of everything I flagged, the share that later became an event.</dd>
           <dt>Recall</dt>
           <dd>Of all the events, the share my chosen cutoff managed to find.</dd>
           <dt>Precision-recall AUC</dt>
           <dd>
-            One number summarizing how well the model put upcoming events above
+            One number summarizing how well a predictive method put upcoming events above
             other records.
           </dd>
           <dt>Brier score</dt>

@@ -39,7 +39,7 @@ def build_report(settings: Settings) -> str:
         model_section = f"""
 ## Forecasting the next assessment
 
-At the end of one course week, the model estimates whether the next non-exam
+At the end of one course week, the forecast estimates whether the next non-exam
 assessment for that student-course attempt will be missing by its due date or
 have a recorded score below 40. One test record is one weekly snapshot with a
 known upcoming assessment. Exams are excluded because their due dates are often
@@ -47,13 +47,13 @@ unavailable.
 
 The later 2014J test contains **{test_snapshots:,} weekly snapshots**. The target
 occurred after **{test_events:,} snapshots ({_percent(float(calibrated["prevalence"]))})**.
-The boosted challenger ranked cases best, with precision-recall AUC
-**{best["pr_auc"]:.3f}**. The calibrated logistic model used for the alert
-example reached PR AUC **{calibrated["pr_auc"]:.3f}** and Brier score
+Gradient-boosted decision trees ranked cases best, with precision-recall AUC
+**{best["pr_auc"]:.3f}**. Calibrated logistic regression, used for the alert
+example, reached PR AUC **{calibrated["pr_auc"]:.3f}** and Brier score
 **{calibrated["brier"]:.3f}**. It is the inspectable reference because its
 coefficients, probability calibration, and cutoff behavior are easier to check.
 
-At a 0.50 cutoff, the calibrated logistic model flagged
+At a 0.50 cutoff, calibrated logistic regression flagged
 **{int(threshold["records_flagged"]):,} snapshots
 ({_percent(float(threshold["flag_rate"]))})**. About
 **{_percent(float(threshold["precision"]))} of alerts were correct**, and the
@@ -71,12 +71,12 @@ automatic decision.
                 & (withdrawal["split"] == "test")
             ].iloc[0]
             model_section += f"""
-## A separate withdrawal model produced too many false alerts
+## A separate logistic regression forecast produced too many false alerts
 
-The second model asks whether a recorded unregistration will occur within 28
+The separate logistic regression asks whether a recorded unregistration will occur within 28
 days after one of the same weekly snapshots. In the later 2014J test records,
 that happened after **{_percent(withdrawal_test["prevalence"])}** of snapshots.
-At a 0.50 cutoff, the model flagged
+At a 0.50 cutoff, logistic regression flagged
 **{_percent(withdrawal_test["flag_rate"])}** of snapshots, but only
 **{_percent(withdrawal_test["precision"])}** of its alerts were correct. It found
 **{_percent(withdrawal_test["recall"])}** of the withdrawals that did occur.
@@ -124,7 +124,7 @@ passes.
 
 VLE clicks record platform interactions, not attention, effort, motivation, or
 learning. OULAD covers selected anonymized Open University modules from
-2013-2014. Associations do not establish causes, and model performance on these
+2013-2014. Associations do not establish causes, and forecast performance on these
 presentations does not establish performance in another institution or period.
 """
     output = settings.reports_dir / "findings.md"

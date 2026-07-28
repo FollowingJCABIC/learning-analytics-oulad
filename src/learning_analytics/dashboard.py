@@ -93,6 +93,18 @@ def build_dashboard(settings: Settings) -> None:
         (settings.reports_dir / "source-audit.json").read_text(encoding="utf-8")
     )
     scale = audit["calculated_scale"]
+    public_summary = json.loads(
+        (settings.reports_dir / "public-summary.json").read_text(encoding="utf-8")
+    )
+    model_explanation = public_summary["modelExplanation"]
+    model_families = "\n".join(
+        f"""<li>
+            <strong>{html.escape(family["name"])}.</strong>
+            {html.escape(family["plainLanguage"])}
+            <span>{html.escape(family["reason"])}</span>
+          </li>"""
+        for family in model_explanation["families"]
+    )
 
     outcomes = _read_table(settings, "outcome_distribution.csv")
     attempts = int(outcomes["attempts"].sum())
@@ -365,27 +377,31 @@ def build_dashboard(settings: Settings) -> None:
                 eyebrow="Model comparison",
                 title="The models found a pattern, but not a certain answer",
                 takeaway=(
-                    f"The boosted model ranked the upcoming assessment cases best at "
-                    f"{boosted['pr_auc']:.3f}, compared with a no-model reference of "
+                    "Gradient-boosted decision trees ranked the upcoming assessment "
+                    f"cases best at {boosted['pr_auc']:.3f}, compared with a "
+                    f"prevalence reference of "
                     f"{prevalence['pr_auc']:.3f}."
                 ),
                 explanation=(
-                    f"The calibrated logistic model scored {calibrated['pr_auc']:.3f}. "
+                    "Calibrated logistic regression scored "
+                    f"{calibrated['pr_auc']:.3f}. "
                     "I used it for the alert example because its probabilities, "
                     "contributing factors, and cutoff behavior were easier to explain "
-                    "and check. The boosted model remains the stronger ranking challenger."
+                    "and check. Gradient-boosted decision trees remain the stronger "
+                    "ranking comparison."
                 ),
                 caution=(
-                    "Neither model explains why an assessment was missing or below 40. "
+                    "Neither predictive method explains why an assessment was missing "
+                    "or below 40. "
                     "A forecast should prompt a person to review the recent record, not "
                     "label a student or make an automatic decision."
                 ),
                 alt=(
                     f"Three-bar comparison of later-test precision-recall AUC, where "
-                    f"higher is better. The no-model event-rate reference is "
-                    f"{prevalence['pr_auc']:.3f}, the calibrated logistic model is "
-                    f"{calibrated['pr_auc']:.3f}, and the boosted challenger is "
-                    f"{boosted['pr_auc']:.3f}."
+                    f"higher is better. The prevalence reference is "
+                    f"{prevalence['pr_auc']:.3f}, calibrated logistic regression is "
+                    f"{calibrated['pr_auc']:.3f}, and gradient-boosted decision trees "
+                    f"are {boosted['pr_auc']:.3f}."
                 ),
                 caption=(
                     "Higher is better. The complete model comparison remains available "
@@ -395,7 +411,7 @@ def build_dashboard(settings: Settings) -> None:
                     "I used precision-recall AUC to summarize how well each model ranks "
                     "weekly snapshots followed by a missing or below-40 next assessment "
                     "above the other snapshots. A score of 1.0 would be perfect. The "
-                    "event rate is the no-model reference."
+                    "event rate is the prevalence reference."
                 ),
             ),
             _chart_slide(
@@ -405,18 +421,19 @@ def build_dashboard(settings: Settings) -> None:
                 title="Then I checked whether the probabilities were believable",
                 takeaway=(
                     "The lower predictions were fairly close to what happened, but "
-                    "the model overstated the rate for the highest group."
+                    "calibrated logistic regression overstated the rate for the "
+                    "highest group."
                 ),
                 explanation=(
                     f"In that highest group, the average prediction was "
                     f"{highest_calibration_bin['mean_predicted_probability']:.0%} and "
                     f"the actual event rate was "
                     f"{highest_calibration_bin['observed_event_rate']:.0%}. "
-                    "The simple question I was asking was: when the model says 30%, "
+                    "The simple question I was asking was: when this method says 30%, "
                     "does something close to 30% actually happen?"
                 ),
                 caution=(
-                    "A model can put records in a useful order while still giving "
+                    "A predictive method can put records in a useful order while still giving "
                     "imperfect probabilities. I had to check both."
                 ),
                 alt=(
@@ -463,7 +480,8 @@ def build_dashboard(settings: Settings) -> None:
                     "as the percentage of weekly records flagged becomes smaller."
                 ),
                 caption=(
-                    "The cutoff controls how many records the model would flag."
+                    "The cutoff controls how many records calibrated logistic regression "
+                    "would flag."
                 ),
                 technical_note=(
                     "Precision is the share of my flags that became events. Recall is "
@@ -477,12 +495,13 @@ def build_dashboard(settings: Settings) -> None:
                 eyebrow="Forecast timing",
                 title="I also had to decide how early to make the forecast",
                 takeaway=(
-                    "Later weeks usually gave the model more useful information, but "
+                    "Later weeks usually gave the predictive methods more useful information, but "
                     "a later forecast would leave less time to respond."
                 ),
                 explanation=(
                     "Early in a course, I had very little activity or assessment "
-                    "history to work with. Waiting gave the model a fuller record, but "
+                    "history to work with. Waiting gave the predictive methods a "
+                    "fuller record, but "
                     "it also reduced the value of an early warning."
                 ),
                 caution=(
@@ -1062,6 +1081,101 @@ def build_dashboard(settings: Settings) -> None:
       color: var(--muted);
     }
 
+    .model-definition,
+    .model-role-summary {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin: 34px 0 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .model-definition div,
+    .model-role-summary div {
+      min-width: 0;
+      padding: 18px 22px 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .model-definition div:nth-child(2n),
+    .model-role-summary div:nth-child(2n) {
+      padding-right: 0;
+      padding-left: 22px;
+      border-left: 1px solid var(--line);
+    }
+
+    .model-definition dt {
+      color: var(--blue-dark);
+      font-size: 0.74rem;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .model-definition dd,
+    .model-role-summary p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    .model-family-guide {
+      margin-top: 36px;
+    }
+
+    .model-family-guide h3 {
+      margin: 0;
+    }
+
+    .model-family-guide ol {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0 38px;
+      margin: 18px 0 0;
+      padding: 0;
+      border-top: 1px solid var(--line);
+      list-style: none;
+    }
+
+    .model-family-guide li {
+      padding: 15px 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.88rem;
+      line-height: 1.58;
+    }
+
+    .model-family-guide li strong,
+    .model-family-guide li span {
+      color: var(--ink);
+    }
+
+    .model-family-guide li span {
+      display: block;
+      margin-top: 3px;
+    }
+
+    .model-role-summary strong {
+      color: var(--blue-dark);
+      font-size: 0.86rem;
+    }
+
+    .model-guardrails {
+      max-width: 900px;
+      margin-top: 28px;
+      padding-left: 20px;
+      border-left: 4px solid var(--coral);
+    }
+
+    .model-guardrails p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.62;
+    }
+
+    .model-guardrails p + p {
+      margin-top: 10px;
+    }
+
     .evaluation-flow,
     .method-flow {
       display: grid;
@@ -1393,11 +1507,20 @@ def build_dashboard(settings: Settings) -> None:
       .finding-summary,
       .summary-findings,
       .evaluation-flow,
+      .model-definition,
+      .model-family-guide ol,
+      .model-role-summary,
       .model-summary,
       .limits-grid,
       .skills-list,
       .terms {
         grid-template-columns: 1fr;
+      }
+
+      .model-definition div:nth-child(2n),
+      .model-role-summary div:nth-child(2n) {
+        padding-left: 0;
+        border-left: 0;
       }
 
       .question-list li {
@@ -1526,8 +1649,8 @@ def build_dashboard(settings: Settings) -> None:
             <p>
               In the later test, <strong>$test_events of $test_snapshots weekly
               snapshots ($test_prevalence)</strong> were followed by a missing or
-              below-40 next assessment. At a 50% cutoff, the calibrated logistic
-              model's alerts were correct <strong>$threshold_precision</strong> of the
+              below-40 next assessment. At a 50% cutoff, calibrated logistic
+              regression alerts were correct <strong>$threshold_precision</strong> of the
               time and found <strong>$threshold_recall</strong> of the actual cases.
             </p>
             <p>
@@ -1580,7 +1703,7 @@ def build_dashboard(settings: Settings) -> None:
         <li>Did missing work and submission timing look the same in every course?</li>
         <li>What happened to recorded activity before a withdrawal?</li>
         <li>Could the information available so far help me forecast the next assessment?</li>
-        <li>When the model gave a probability, how much could I trust it?</li>
+        <li>When a forecast gave a probability, how much could I trust it?</li>
       </ol>
     </section>
 
@@ -1658,7 +1781,7 @@ def build_dashboard(settings: Settings) -> None:
         <p>
           At the end of a course week, I used the information available so far to
           estimate whether one student's next non-exam assessment would be missing by
-          its due date or receive a score below 40. The model could help an instructor
+          its due date or receive a score below 40. The forecast could help an instructor
           decide which recent records to review, but it was not reliable enough to
           label a student or make an automatic decision.
         </p>
@@ -1668,10 +1791,36 @@ def build_dashboard(settings: Settings) -> None:
         <h3>One weekly snapshot was one student in one course attempt</h3>
         <p>
           I included a snapshot only when that student had an upcoming non-exam
-          assessment with a known due date. I gave the model only the activity,
+          assessment with a known due date. I gave the predictive methods only the activity,
           submissions, and assessment results that could have been known by the end
           of that week. Later activity and future results stayed out of the inputs.
         </p>
+      </div>
+
+      <dl class="model-definition">
+        <div>
+          <dt>Exact outcome</dt>
+          <dd>$model_outcome.</dd>
+        </div>
+        <div>
+          <dt>When I made the estimate</dt>
+          <dd>$model_time.</dd>
+        </div>
+        <div>
+          <dt>One observation</dt>
+          <dd>$model_observation.</dd>
+        </div>
+        <div>
+          <dt>Information available</dt>
+          <dd>$model_features.</dd>
+        </div>
+      </dl>
+
+      <div class="model-family-guide">
+        <h3>I compared six approaches for six different reasons</h3>
+        <ol>
+          $model_families
+        </ol>
       </div>
 
       <div class="evaluation-flow" aria-label="Model evaluation sequence">
@@ -1700,13 +1849,38 @@ def build_dashboard(settings: Settings) -> None:
         score look better than it really was.
       </p>
 
-      <div class="model-summary" aria-label="Interpretable model summary">
+      <div class="model-role-summary" aria-label="Distinct model roles">
+        <div>
+          <strong>Strongest ranking</strong>
+          <p>$strongest_ranking</p>
+        </div>
+        <div>
+          <strong>Most accurate probabilities</strong>
+          <p>$best_probabilities</p>
+        </div>
+        <div>
+          <strong>Worked cutoff example</strong>
+          <p>$threshold_example</p>
+        </div>
+        <div>
+          <strong>Reference I retained</strong>
+          <p>$retained_reference</p>
+        </div>
+      </div>
+      <div class="model-guardrails">
+        <p><strong>How I chose:</strong> $selection_criterion</p>
+        <p><strong>Demonstrated use:</strong> $practical_use</p>
+        <p><strong>Never use it to:</strong> $prohibited_uses</p>
+      </div>
+
+      <div class="model-summary" aria-label="Calibrated logistic regression summary">
         <div>
           <strong>$calibrated_pr</strong>
-          <span>How well the model ranked upcoming events</span>
+          <span>How well calibrated logistic regression ranked upcoming events</span>
           <p>
             Higher is better and 1.0 would be perfect. My basic comparison score was
-            $prevalence_pr. The model improved on it, but was far from perfect.
+            $prevalence_pr. Calibrated logistic regression improved on it, but was far
+            from perfect.
           </p>
         </div>
         <div>
@@ -1726,13 +1900,13 @@ def build_dashboard(settings: Settings) -> None:
       <article class="forecast-negative" aria-labelledby="withdrawal-model-title">
         <p class="eyebrow">A separate experiment</p>
         <h3 id="withdrawal-model-title">
-          The withdrawal model produced too many false alerts for individual use.
+          The 28-day logistic regression forecast produced too many false alerts for individual use.
         </h3>
         <p>
           I separately tested whether the same kind of weekly snapshot could identify
           a recorded withdrawal within the next 28 days. In the later 2014J test
           records, withdrawal occurred after only <strong>$withdrawal_prevalence</strong>
-          of the snapshots. The model flagged <strong>$withdrawal_flag_rate</strong>
+          of the snapshots. Logistic regression flagged <strong>$withdrawal_flag_rate</strong>
           of all snapshots, but only <strong>$withdrawal_precision</strong> of its
           alerts were correct. It found <strong>$withdrawal_recall</strong> of the
           withdrawals that did occur, but the large number of false alerts made the
@@ -1755,8 +1929,9 @@ def build_dashboard(settings: Settings) -> None:
             decoding="async"
           >
           <figcaption>
-            The overview chart shows the no-model reference, calibrated logistic
-            model, and boosted challenger. This chart preserves every comparison.
+            The overview chart shows the prevalence reference, calibrated logistic
+            regression, and gradient-boosted decision trees. This chart preserves
+            every comparison.
           </figcaption>
         </figure>
       </details>
@@ -1861,7 +2036,7 @@ def build_dashboard(settings: Settings) -> None:
         <p class="eyebrow">What I learned by doing it</p>
         <h2 id="skills-title">This project made me connect the whole process</h2>
         <p>
-          The model was only one part of the work. The real challenge was staying with
+          Forecasting was only one part of the work. The real challenge was staying with
           the same question from the messy original files through the database,
           analysis, testing, and explanation.
         </p>
@@ -1873,7 +2048,7 @@ def build_dashboard(settings: Settings) -> None:
           manual steps.
         </li>
         <li>I built the forecast one week at a time without letting future information slip in.</li>
-        <li>I tested the model's ranking, probabilities, cutoffs, and timing separately.</li>
+        <li>I tested the forecast's ranking, probabilities, cutoffs, and timing separately.</li>
         <li>
           I learned to explain a useful result without pretending it was more
           certain than it was.
@@ -1905,16 +2080,19 @@ def build_dashboard(settings: Settings) -> None:
           <dt>Weekly snapshot</dt>
           <dd>The information I could have known at the end of one course week.</dd>
           <dt>Forecast target</dt>
-          <dd>What I asked the model to estimate: a missing or below-40 next assessment.</dd>
+          <dd>
+            What I asked the predictive methods to estimate: a missing or below-40
+            next assessment.
+          </dd>
           <dt>Later test data</dt>
-          <dd>Later course offerings I did not use until the final model test.</dd>
+          <dd>Later course offerings I did not use until the final forecast test.</dd>
           <dt>Precision</dt>
           <dd>Of everything I flagged, the share that later became an event.</dd>
           <dt>Recall</dt>
           <dd>Of all the events, the share my chosen cutoff managed to find.</dd>
           <dt>Precision-recall AUC</dt>
           <dd>
-            One number summarizing how well the model put upcoming events above
+            One number summarizing how well a predictive method put upcoming events above
             other records.
           </dd>
           <dt>Brier score</dt>
@@ -1993,6 +2171,18 @@ def build_dashboard(settings: Settings) -> None:
         withdrawal_flag_rate=f"{float(withdrawal_test['flag_rate']):.1%}",
         withdrawal_precision=f"{float(withdrawal_test['precision']):.1%}",
         withdrawal_recall=f"{float(withdrawal_test['recall']):.1%}",
+        model_outcome=html.escape(model_explanation["outcome"]),
+        model_time=html.escape(model_explanation["predictionTime"]),
+        model_observation=html.escape(model_explanation["observation"]),
+        model_features=html.escape(model_explanation["featureTypes"]),
+        model_families=model_families,
+        strongest_ranking=html.escape(model_explanation["strongestRanking"]),
+        best_probabilities=html.escape(model_explanation["bestProbabilities"]),
+        threshold_example=html.escape(model_explanation["thresholdExample"]),
+        retained_reference=html.escape(model_explanation["retainedReference"]),
+        selection_criterion=html.escape(model_explanation["selectionCriterion"]),
+        practical_use=html.escape(model_explanation["practicalUse"]),
+        prohibited_uses=html.escape(model_explanation["prohibitedUses"]),
         analysis_slides=analysis_slides,
         forecast_slides=forecast_slides,
     )

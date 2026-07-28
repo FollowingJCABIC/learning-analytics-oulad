@@ -24,9 +24,15 @@ def test_dashboard_builds_the_plain_language_presentation() -> None:
         "I kept complete course offerings together during model evaluation "
         "instead of randomly splitting related weekly records."
     ) in text
-    assert "The withdrawal model produced too many false alerts" in text
+    assert "The 28-day logistic regression forecast produced too many false alerts" in text
     assert "within the next 28 days" in text
     assert "only <strong>8.0%</strong> of its alerts were correct" in text
+    assert "Gradient-boosted decision trees ranked the later 2014J cases best" in text
+    assert "Gradient-boosted decision trees also had the lowest later-test Brier score" in text
+    assert "The worked 0.50 cutoff used calibrated logistic regression" in text
+    assert "Calibrated logistic regression remains the recommended inspectable reference" in text
+    assert "Regularized logistic regression." in text
+    assert "Constrained decision tree." in text
     assert "These records show patterns, not the full lives behind them" in text
     assert "This project made me connect the whole process" in text
     assert "Open my plain-language glossary" in text

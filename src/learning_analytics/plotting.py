@@ -15,12 +15,12 @@ COLORS = {
 }
 
 MODEL_LABELS = {
-    "prevalence_baseline": "Event-rate baseline",
-    "sql_rule_baseline": "Simple rules baseline",
-    "logistic_regression": "Logistic regression",
-    "decision_tree": "Decision tree",
-    "gradient_boosted_tree": "Boosted challenger",
-    "calibrated_logistic_regression": "Calibrated logistic model",
+    "prevalence_baseline": "Prevalence baseline",
+    "sql_rule_baseline": "SQL rule baseline",
+    "logistic_regression": "Regularized logistic regression",
+    "decision_tree": "Constrained decision tree",
+    "gradient_boosted_tree": "Gradient-boosted decision trees",
+    "calibrated_logistic_regression": "Calibrated logistic regression",
 }
 
 
@@ -185,7 +185,7 @@ def model_overview(frame: pd.DataFrame, path: Path) -> None:
     bars[0].set_hatch("///")
     axis.bar_label(bars, fmt="%.3f", padding=5, color=COLORS["gray"])
     axis.set_xlim(0, 0.75)
-    axis.set_title("The boosted model ranked cases best", loc="left")
+    axis.set_title("Gradient-boosted decision trees ranked cases best", loc="left")
     axis.set_xlabel("Precision-recall AUC (higher is better)")
     axis.set_ylabel("")
     axis.grid(axis="x", alpha=0.2)

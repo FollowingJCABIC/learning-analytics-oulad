@@ -77,6 +77,52 @@
     "testPrAuc": 0.5939497869924096,
     "testBrier": 0.1297496614147775
   },
+  "modelExplanation": {
+    "kind": "predictive",
+    "outcome": "Whether the next non-exam assessment with a known due date would be missing by that date or receive a score below 40",
+    "predictionTime": "At the end of each course week, before the next eligible assessment was due",
+    "observation": "One weekly snapshot for one student in one course attempt",
+    "featureTypes": "Recent and cumulative platform activity, prior submissions and scores known by that week, already-missing assessments, progress, and course context; demographic fields were not used",
+    "families": [
+      {
+        "name": "Prevalence baseline",
+        "plainLanguage": "It gave every weekly snapshot the same event rate seen in the training courses.",
+        "reason": "It set the minimum no-personalization reference."
+      },
+      {
+        "name": "SQL rule baseline",
+        "plainLanguage": "It used fixed checks for inactivity, earlier missing work, or declining engagement.",
+        "reason": "It provided a transparent rule-based comparison."
+      },
+      {
+        "name": "Regularized logistic regression",
+        "plainLanguage": "It combined the available measures into an additive score while shrinking unstable coefficients.",
+        "reason": "It provided an inspectable statistical reference."
+      },
+      {
+        "name": "Constrained decision tree",
+        "plainLanguage": "It used a short sequence of if-then splits.",
+        "reason": "It tested a simple nonlinear alternative that a person could still inspect."
+      },
+      {
+        "name": "Gradient-boosted decision trees",
+        "plainLanguage": "They built many shallow trees in sequence so later trees could correct earlier errors.",
+        "reason": "They tested whether interactions and nonlinear patterns improved ranking."
+      },
+      {
+        "name": "Calibrated logistic regression",
+        "plainLanguage": "It adjusted the logistic regression probabilities using the 2014B validation courses.",
+        "reason": "It provided an inspectable probability and workload reference for the alert example."
+      }
+    ],
+    "strongestRanking": "Gradient-boosted decision trees ranked the later 2014J cases best, with precision-recall AUC 0.642.",
+    "bestProbabilities": "Gradient-boosted decision trees also had the lowest later-test Brier score, 0.123; lower probability error is better.",
+    "thresholdExample": "The worked 0.50 cutoff used calibrated logistic regression: it flagged 14.4% of 117,186 later-test weekly snapshots, with 61.6% precision, 42.1% recall, and a median 26-day lead for correct alerts.",
+    "retainedReference": "Calibrated logistic regression remains the recommended inspectable reference, not the top-scoring model.",
+    "selectionCriterion": "I valued coefficients, preprocessing, probability adjustment, and cutoff behavior that another analyst could inspect. Predictive performance mattered, but it was not the only criterion because the score would affect human review workload and potentially sensitive outreach.",
+    "practicalUse": "The result demonstrates retrospective prioritization on later historical courses. It has not been prospectively validated or used in an operational support process.",
+    "prohibitedUses": "The output should never automatically grade, admit, discipline, rank, surveil, or deny an opportunity to a student, and it should never be treated as a measure of intelligence, motivation, effort, or need."
+  },
   "tools": [
     "PostgreSQL",
     "SQL",
@@ -93,4 +139,3 @@
     "technicalMethods": "https://github.com/FollowingJCABIC/learning-analytics-oulad/blob/main/docs/methodology.md"
   }
 }
-

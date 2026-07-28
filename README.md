@@ -16,7 +16,7 @@ unit was one student-course attempt at the end of one course week, when a later
 non-exam assessment with a known due date was available. In the later 2014J
 test, 24,724 of 117,186 weekly snapshots (21.1%) were followed by that result.
 Exams were excluded because OULAD often does not provide their due dates. The
-calibrated logistic model's alerts were correct 61.6% of the time and found
+calibrated logistic regression alerts were correct 61.6% of the time and found
 42.1% of the cases that actually occurred. That result could help an instructor
 choose which records to review, but it missed more than half of the actual
 cases and should not make an automatic decision about a student.
@@ -43,13 +43,14 @@ source audit, model metrics, threshold analysis, and withdrawal-model results.
    rates ranged from 14.7% to 56.5% across course offerings. A single rule for
    every course would have hidden that difference.
 3. **The next poor assessment result could be anticipated, with limits.** At a
-   50% cutoff, the calibrated logistic model flagged 14.4% of later-test weekly
-   snapshots. About 62 of every 100 alerts were correct, but the model found
+   50% cutoff, calibrated logistic regression flagged 14.4% of later-test weekly
+   snapshots. About 62 of every 100 alerts were correct, but it found
    only about 42 of every 100 actual cases.
 
-The separate 28-day withdrawal model produced too many false alerts for
+The separate 28-day logistic regression forecast for recorded withdrawal produced too many false alerts for
 individual use. Only 8.0% of its alerts were correct on a 3.9% event rate, so I
-report it as an unsuccessful model rather than an individual warning system.
+report it as an unsuccessful predictive comparison rather than an individual
+warning system.
 
 ## Verified dataset
 
@@ -127,18 +128,20 @@ The way I connected and organized the tables is documented in
 - Checksum-verified download and streaming source profiler.
 - Parameterized database utilities and importable analysis modules.
 - Reproducible scikit-learn pipelines with prevalence and SQL-rule baselines,
-  logistic regression, a constrained decision tree, and a boosted challenger.
+  regularized logistic regression, a constrained decision tree,
+  gradient-boosted decision trees, and calibrated logistic regression.
 - Complete-presentation temporal splits, probability calibration, threshold
   analysis, subgroup diagnostics, and saved model artifacts.
 - Programmatic, accessible charts and a generated static full analysis.
 
 ## Forecast definition
 
-At the end of one course week, the primary model estimates whether the next
+At the end of one course week, the primary forecast estimates whether the next
 non-exam assessment for that student-course attempt will be absent by its due
 date or have a recorded score below 40. One record is one weekly snapshot with
 a known upcoming assessment. Exams are excluded because their due dates are
-often unavailable. The model uses only activity, submissions, scores, and due
+often unavailable. The predictive methods use only activity, submissions,
+scores, and due
 dates that could have been known by the end of that week.
 
 Presentations from 2013 train the models, complete 2014B presentations form the
@@ -146,6 +149,46 @@ validation set, and complete 2014J presentations form the later test set. B and
 J are the source dataset's labels for earlier- and later-year teaching periods.
 No random row split mixes weekly records from the same presentation across the
 development and test groups.
+
+## What I compared and how I used the results
+
+I compared six approaches:
+
+1. **Prevalence baseline:** every weekly snapshot received the event rate from
+   the training courses. This was the minimum no-personalization reference.
+2. **SQL rule baseline:** fixed checks looked for inactivity, earlier missing
+   work, or declining engagement. This was the transparent rule-based reference.
+3. **Regularized logistic regression:** the method combined the available
+   measures into an additive score while shrinking unstable coefficients. It
+   provided an inspectable statistical comparison.
+4. **Constrained decision tree:** a short sequence of if-then splits tested a
+   simple nonlinear alternative.
+5. **Gradient-boosted decision trees:** many shallow trees were built in
+   sequence so later trees could correct earlier errors. This tested whether
+   interactions and nonlinear patterns improved ranking.
+6. **Calibrated logistic regression:** the logistic probabilities were adjusted
+   using the 2014B validation courses. This produced the inspectable probability
+   and workload reference used in the 50% cutoff example.
+
+These approaches did not produce one universal “best” answer:
+
+- **Strongest ranking:** gradient-boosted decision trees, with later-test
+  precision-recall AUC 0.642.
+- **Most accurate probabilities:** gradient-boosted decision trees, with the
+  lowest later-test Brier score, 0.123.
+- **Worked cutoff example:** calibrated logistic regression at 0.50, with 61.6%
+  precision, 42.1% recall, a 14.4% flag rate, and a median 26-day lead for
+  correct alerts.
+- **Recommended inspectable reference:** calibrated logistic regression. I kept
+  it because another analyst can more readily inspect its coefficients,
+  preprocessing, probability adjustment, and cutoff behavior. It is not the
+  top-scoring method.
+
+This is a retrospective demonstration on later historical courses, not a
+prospectively validated support system. The output must never automatically
+grade, admit, discipline, rank, surveil, or deny an opportunity to a student,
+and it must not be treated as a measure of intelligence, motivation, effort,
+or need.
 
 ## What the analysis found
 
@@ -156,7 +199,7 @@ development and test groups.
   the data do not identify why an attempt ended.
 - The largest module-presentation missing-submission rate was 56.5% in CCC
   2014B; course design and unobserved context limit comparison.
-- On complete later 2014J presentations, the boosted challenger reached
+- On complete later 2014J presentations, gradient-boosted decision trees reached
   0.642 precision-recall AUC. The calibrated logistic reference reached 0.594
   PR AUC and a 0.130 Brier score.
 - The weekly materialized mart ran about 18 times faster than the measured raw
@@ -216,4 +259,4 @@ VLE clicks are platform traces, not direct measures of effort, attention,
 motivation, understanding, or intelligence. Withdrawal may occur for reasons
 not represented in the data. OULAD is historical and institution-specific.
 Findings are associative, demographic comparisons require care, and performance
-on the later test courses does not establish that the model will transfer elsewhere.
+on the later test courses does not establish that the forecast will transfer elsewhere.

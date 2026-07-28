@@ -37,31 +37,31 @@ submission by its due day or its recorded score is below 40. Banked
 assessments remain visible in the source mart and can be analyzed separately.
 
 The target is evaluated because it is temporally definable and grounded in the
-documented pass threshold. It is not chosen to maximize model performance.
+documented pass threshold. It is not chosen to maximize predictive performance.
 
 ## Secondary target
 
-A separate descriptive model estimates whether recorded unregistration occurs
+A separate logistic regression estimates whether recorded unregistration occurs
 within the next 28 days. The eventual unregistration date is used only to
 construct this future label and is never included as a feature. Withdrawal can
 reflect work, health, finances, access, course fit, or other circumstances not
 measured in OULAD, so this forecast must not be interpreted as motivation,
 aptitude, or a prescribed response.
 
-## Model sequence
+## Approaches compared
 
 1. training-presentation prevalence;
 2. transparent inactivity, prior-missingness, or declining-engagement rule;
 3. regularized logistic regression;
 4. depth-constrained decision tree;
-5. histogram gradient-boosted challenger;
+5. histogram gradient-boosted decision trees;
 6. logistic probability calibration on the validation presentations.
 
 ## Split strategy
 
 Presentations from 2013 train the models. Complete 2014B presentations form the
 validation set. Complete 2014J presentations form the later test set and are not
-used during model development. This
+used during predictive development. This
 prevents weekly rows from the same module-presentation from crossing
 partitions and tests movement to later presentations. The split is stricter
 and more operationally meaningful than a random 80/20 row split.
@@ -83,7 +83,7 @@ unobserved circumstances. They must not be interpreted as innate differences.
 
 Charts report sample sizes or link to underlying tables. Comparisons are
 descriptive unless a statistical procedure is explicitly named. Feature
-coefficients and importances describe model associations, not causal effects.
+coefficients and importances describe learned associations, not causal effects.
 
 ## Limitations
 
