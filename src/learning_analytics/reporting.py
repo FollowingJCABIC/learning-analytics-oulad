@@ -30,19 +30,38 @@ def build_report(settings: Settings) -> str:
         test = metrics[metrics["split"] == "test"]
         best = test.loc[test["pr_auc"].idxmax()]
         calibrated = test[test["model"] == "calibrated_logistic_regression"].iloc[0]
+        thresholds = pd.read_csv(
+            settings.reports_dir / "tables" / "threshold_analysis.csv"
+        )
+        threshold = thresholds.iloc[(thresholds["threshold"] - 0.5).abs().argmin()]
+        test_snapshots = int(calibrated["n"])
+        test_events = int(round(float(calibrated["prevalence"]) * test_snapshots))
         model_section = f"""
-## Weekly outcome forecasting
+## Forecasting the next assessment
 
-The held-out test set contains complete 2014J presentations. The strongest test
-precision-recall AUC was **{best["pr_auc"]:.3f}** for
-`{best["model"]}`. The calibrated logistic model achieved PR AUC
-**{calibrated["pr_auc"]:.3f}**, Brier score **{calibrated["brier"]:.3f}**,
-precision **{calibrated["precision"]:.3f}**, and recall
-**{calibrated["recall"]:.3f}** at the prespecified 0.50 threshold.
+At the end of one course week, the model estimates whether the next non-exam
+assessment for that student-course attempt will be missing by its due date or
+have a recorded score below 40. One test record is one weekly snapshot with a
+known upcoming assessment. Exams are excluded because their due dates are often
+unavailable.
 
-These are forecasts of the next recorded assessment event, not measures of
-motivation, aptitude, or instructional need. Threshold analysis is reported
-separately because workload and false alerts change with the threshold.
+The later 2014J test contains **{test_snapshots:,} weekly snapshots**. The target
+occurred after **{test_events:,} snapshots ({_percent(float(calibrated["prevalence"]))})**.
+The boosted challenger ranked cases best, with precision-recall AUC
+**{best["pr_auc"]:.3f}**. The calibrated logistic model used for the alert
+example reached PR AUC **{calibrated["pr_auc"]:.3f}** and Brier score
+**{calibrated["brier"]:.3f}**. It is the inspectable reference because its
+coefficients, probability calibration, and cutoff behavior are easier to check.
+
+At a 0.50 cutoff, the calibrated logistic model flagged
+**{int(threshold["records_flagged"]):,} snapshots
+({_percent(float(threshold["flag_rate"]))})**. About
+**{_percent(float(threshold["precision"]))} of alerts were correct**, and the
+alerts found **{_percent(float(threshold["recall"]))} of the actual cases**. A
+correct alert came a median of
+**{int(threshold["median_true_alert_lead_days"]):,} days** before the assessment.
+This result may support human review; it should not label students or make an
+automatic decision.
 """
         withdrawal_path = settings.reports_dir / "tables" / "withdrawal_model_metrics.csv"
         if withdrawal_path.exists():
@@ -52,19 +71,24 @@ separately because workload and false alerts change with the threshold.
                 & (withdrawal["split"] == "test")
             ].iloc[0]
             model_section += f"""
-The separate 28-day withdrawal investigation had held-out prevalence
-**{_percent(withdrawal_test["prevalence"])}**, PR AUC
-**{withdrawal_test["pr_auc"]:.3f}**, precision
-**{withdrawal_test["precision"]:.3f}**, and recall
-**{withdrawal_test["recall"]:.3f}** at threshold 0.50. Its low precision makes
-it unsuitable for individual use, and OULAD does not record many reasons for
-withdrawal.
+## A separate withdrawal model produced too many false alerts
+
+The second model asks whether a recorded unregistration will occur within 28
+days after one of the same weekly snapshots. In the later 2014J test records,
+that happened after **{_percent(withdrawal_test["prevalence"])}** of snapshots.
+At a 0.50 cutoff, the model flagged
+**{_percent(withdrawal_test["flag_rate"])}** of snapshots, but only
+**{_percent(withdrawal_test["precision"])}** of its alerts were correct. It found
+**{_percent(withdrawal_test["recall"])}** of the withdrawals that did occur.
+That is far too many false alerts for individual use. I report the unsuccessful
+result because it shows where the available records did not support the proposed
+use.
 """
 
-    text = f"""# Executed findings
+    text = f"""# Findings from the saved analysis
 
-Generated from the PostgreSQL marts and saved model outputs. No finding below
-is inferred from the dataset description alone.
+These findings come from the PostgreSQL marts and saved model outputs. None is
+inferred from the dataset description alone.
 
 ## Verified scale
 

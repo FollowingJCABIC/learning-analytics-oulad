@@ -1,0 +1,190 @@
+\chapter{Glossary}
+\label{ch:glossary}
+
+\begin{longtable}{@{}p{0.24\textwidth}p{0.70\textwidth}@{}}
+\caption{Course glossary}\label{tab:glossary}\\
+\toprule
+Term & Meaning in this course \\
+\midrule
+\endfirsthead
+\toprule
+Term & Meaning in this course \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Analytical grain &
+What one row represents in a relation or result. Also called the unit of
+observation. \\
+Archive &
+One packaged file that contains other files, commonly in ZIP format. \\
+Attempt &
+One student's participation in one module presentation. A student can have
+multiple attempts. \\
+Audit &
+A recorded inspection of data or files against stated expectations. \\
+Candidate key &
+A column or combination of columns expected to identify one row uniquely. It
+must be tested. \\
+Cardinality &
+The number and pattern of relationships between rows, such as one-to-many. \\
+Causal claim &
+A claim about what would change because of an intervention or exposure, not
+merely what is associated in observed data. \\
+Code and script &
+Code is text containing computer instructions. A script is a file that runs a
+sequence of those instructions. \\
+Command and terminal &
+A command is one instruction given to a computer. A terminal is the
+text-based application in which project commands are run. \\
+Constraint &
+A database rule that restricts permitted values or relationships. \\
+Core layer &
+The project's typed, named, analysis-ready relational layer. \\
+CSV &
+Comma-separated values: a text format for tabular data. \\
+Data and dataset &
+Data are recorded values or facts. A dataset is an organized collection of
+records. \\
+Data science &
+The combined use of programming, databases, statistics, and subject knowledge
+to learn from data and communicate evidence. \\
+Data dictionary &
+Documentation describing fields, values, tables, and their intended meanings. \\
+Database &
+An organized collection of data managed by a database system. In PostgreSQL, a
+database contains schemas, which contain relations and other objects. \\
+Descriptive analysis &
+Analysis that summarizes what is recorded in a defined dataset and population. \\
+Dimension &
+A descriptive attribute used to group or filter measures, such as module or
+presentation. \\
+Evidence log &
+A record connecting a result to its query, unit, population, interpretation,
+and limitations. \\
+Feature &
+A variable constructed for analysis or modeling. Its definition must include
+grain and information-availability timing. \\
+Foreign key &
+A value or set of values that refers to a key in another relation. \\
+Grain &
+See analytical grain. \\
+Identifier &
+A value used to name or match a recorded entity. Whether it uniquely identifies
+a row depends on the table's grain. \\
+IMD band &
+A binned index-of-multiple-deprivation field in OULAD. It contains missing
+values and should not be treated as a complete measure of an individual. \\
+Information leakage &
+Use of data that would not be available at the intended decision time, or that
+otherwise reveals the target improperly. \\
+Implementation &
+The working code and settings that perform a project, as distinct from
+documentation that explains it. \\
+Input and output &
+An input is what a step receives; an output is what the step produces. \\
+Join &
+An operation that combines rows from relations according to a match condition. \\
+Lineage &
+The traceable path from original source data through transformations to a
+reported result. \\
+Materialized view &
+A stored result of a query that must be refreshed when its inputs change. \\
+Metric &
+A precisely defined value used to summarize something, including its unit and
+denominator where applicable. \\
+Missing value &
+An absent or unavailable field value. Its meaning depends on source and
+context; it is not automatically an error or zero. \\
+Module &
+An anonymized OULAD course unit. \\
+Model &
+A mathematical rule used to summarize relationships or calculate predictions
+from input variables. \\
+Normalization &
+Organizing relations to reduce redundancy and update anomalies. \\
+Null &
+SQL's marker for a missing or unknown value. Comparisons use
+\texttt{IS NULL}, not equality to null. \\
+Observation window &
+The time interval from which information is permitted when constructing an
+analysis or prediction. \\
+OULAD &
+The Open University Learning Analytics Dataset used by this project. \\
+Orphan &
+A child row whose expected parent key cannot be found. \\
+Path &
+The address of a file or directory, such as
+\projectfile{sql/02_staging.sql}. \\
+Pipeline &
+An ordered workflow in which the output of one step becomes input to another. \\
+Population &
+The complete set of observations about which an analytical claim is made. \\
+PostgreSQL &
+The open-source relational database system used by the project. \\
+Presentation &
+A particular offering of a module, identified by an anonymized code. \\
+Primary key &
+The database-enforced identifier for a row in a relation. \\
+Prediction &
+An estimate of a later or unknown recorded outcome. It does not by itself
+explain why the outcome occurs. \\
+Proportion &
+A part divided by a named whole. Multiplying a proportion by 100 produces a
+percentage. \\
+Proxy &
+A recorded stand-in for a concept that is difficult to measure directly. \\
+Quality gate &
+A set of blocking checks that must pass before dependent analysis proceeds. \\
+Query &
+A request written in SQL that asks a database to return, combine, summarize,
+or modify data. \\
+Raw layer &
+The source-preserving database layer, loaded primarily as text so source
+conditions remain inspectable. \\
+Reconciliation &
+Comparison of totals or other invariants across source, raw, transformed, and
+reported stages. \\
+Referential integrity &
+Consistency of relationships between child and parent keys. \\
+Relation &
+A table-like set of rows and columns in the relational model. \\
+Repository &
+The organized project folder and its tracked files. \\
+Reproducibility &
+The ability to regenerate results from documented source, code,
+configuration, and environment. \\
+Row and column &
+A row records one observation at the table's grain. A column stores one kind
+of value across rows. \\
+Schema &
+A namespace inside a PostgreSQL database. This project uses schemas to separate
+raw, staging, core, and quality responsibilities. \\
+Staging layer &
+The conversion layer where raw text is parsed, typed, normalized, and checked
+before publication to core relations. \\
+Surrogate key &
+An identifier created by a system rather than derived from the natural domain
+attributes. \\
+Unit of analysis &
+The entity about which a result is calculated or interpreted. It must agree
+with the query grain. \\
+Unlogged table &
+A PostgreSQL table that avoids write-ahead logging for speed but has weaker
+crash-recovery guarantees. \\
+Validation &
+Testing data against stated expectations while preserving evidence of any
+failure. \\
+Variable &
+A recorded characteristic that can differ across observations and is usually
+stored in a table column. \\
+VLE &
+Virtual learning environment. OULAD records summarized interaction with VLE
+sites by student and relative day. \\
+Warning profile &
+A nonblocking quality result that requires an analytical decision or
+interpretive note. \\
+Window function &
+A SQL function that calculates across related rows without collapsing them in
+the way \texttt{GROUP BY} does. \\
+\end{longtable}

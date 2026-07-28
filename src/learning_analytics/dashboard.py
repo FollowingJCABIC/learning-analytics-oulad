@@ -23,6 +23,7 @@ FIGURE_FILES = (
     "submission_timing.png",
     "withdrawal_alignment.png",
     "model_comparison.png",
+    "model_overview.png",
     "calibration.png",
     "threshold_curve.png",
     "performance_by_week.png",
@@ -52,7 +53,7 @@ def _chart_slide(
     if technical_note:
         note = f"""
           <details class="technical-note">
-            <summary>Technical note</summary>
+            <summary>How I worked this out</summary>
             <p>{html.escape(technical_note)}</p>
           </details>"""
 
@@ -63,7 +64,7 @@ def _chart_slide(
           <p class="takeaway">{html.escape(takeaway)}</p>
           <p>{html.escape(explanation)}</p>
           <p class="interpretation-note">
-            <strong>Keep in mind:</strong> {html.escape(caution)}
+            <strong>What I would not assume:</strong> {html.escape(caution)}
           </p>{note}
         </div>
         <figure>
@@ -141,6 +142,16 @@ def build_dashboard(settings: Settings) -> None:
 
     thresholds = _read_table(settings, "threshold_analysis.csv")
     threshold_50 = thresholds.iloc[(thresholds["threshold"] - 0.5).abs().argmin()]
+    test_snapshots = int(calibrated["n"])
+    test_events = int(round(float(prevalence["prevalence"]) * test_snapshots))
+    records_flagged = int(threshold_50["records_flagged"])
+    true_alerts = int(threshold_50["true_alerts"])
+
+    withdrawal_metrics = _read_table(settings, "withdrawal_model_metrics.csv")
+    withdrawal_test = withdrawal_metrics[
+        (withdrawal_metrics["model"] == "withdrawal_logistic_regression")
+        & (withdrawal_metrics["split"] == "test")
+    ].iloc[0]
 
     calibration = _read_table(settings, "calibration_bins.csv")
     highest_calibration_bin = calibration.iloc[-1]
@@ -151,21 +162,21 @@ def build_dashboard(settings: Settings) -> None:
                 chart_id="course-outcomes",
                 filename="outcome_distribution.png",
                 eyebrow="Course outcomes",
-                title="How often did each recorded course outcome occur?",
+                title="I began by looking at how each course attempt ended",
                 takeaway=(
-                    f"Withdrawal accounted for {withdrawal_rate:.1%} of course "
-                    "attempts, so it was not a rare edge case in these records."
+                    f"The first thing that stood out to me was withdrawal: it "
+                    f"accounted for {withdrawal_rate:.1%} of all course attempts."
                 ),
                 explanation=(
-                    f"The bars count one outcome for each course attempt: "
+                    f"I counted one outcome for each course attempt: "
                     f"{distinctions:,} distinction, {passes:,} pass, {failures:,} "
-                    f"fail, and {withdrawals:,} withdrawal. A course attempt is one "
-                    "student taking one course offering, not necessarily one unique "
-                    "person."
+                    f"fail, and {withdrawals:,} withdrawal. Here, a course attempt "
+                    "means one student taking one course offering. It does not "
+                    "necessarily mean one unique person."
                 ),
                 caution=(
-                    "The chart reports historical outcomes. It does not explain why "
-                    "a course attempt ended in withdrawal, failure, or success."
+                    "I can see how each attempt ended, but these records do not tell "
+                    "me why someone withdrew, failed, passed, or earned a distinction."
                 ),
                 alt=(
                     f"Bar chart of recorded course outcomes. Pass is highest at "
@@ -173,30 +184,30 @@ def build_dashboard(settings: Settings) -> None:
                     f"fail at {failures:,}, and distinction at {distinctions:,}."
                 ),
                 caption=(
-                    "Recorded outcomes across 32,593 course enrollments or attempts."
+                    "How 32,593 recorded course attempts ended."
                 ),
             ),
             _chart_slide(
                 chart_id="weekly-activity",
                 filename="weekly_engagement.png",
                 eyebrow="Weekly online activity",
-                title="How did recorded platform activity change across the term?",
+                title="Next, I followed online activity from week to week",
                 takeaway=(
-                    f"The typical weekly median rose from {week_0_median:g} clicks "
+                    f"I found that the typical weekly median rose from "
+                    f"{week_0_median:g} clicks "
                     f"in week 0 to {week_2_median:g} in week 2, then fell to "
                     f"{week_12_median:g} by week 12."
                 ),
                 explanation=(
-                    "The median represents a typical active record. The upper "
-                    "quartile represents a comparatively active portion of the "
-                    f"records and remained at {week_12_p75:g} clicks in week 12. "
-                    "The gap shows why one average cannot describe everyone."
+                    "I used the median to describe a typical active record, then "
+                    "compared it with the more active quarter of the records. That "
+                    f"group still had {week_12_p75:g} clicks in week 12. The gap "
+                    "reminded me that one average could not describe everyone."
                 ),
                 caution=(
-                    "This chart summarizes active records. The forecasting data also "
-                    "retains weeks with zero recorded activity so those weeks are not "
-                    "silently dropped. Clicks indicate platform use, not attention, "
-                    "understanding, motivation, or learning."
+                    "A click only tells me that the platform recorded an action. It "
+                    "does not tell me whether someone was attentive, confused, "
+                    "motivated, learning offline, or learning at all."
                 ),
                 alt=(
                     f"Line chart of weekly online-platform clicks. The median peaks "
@@ -205,33 +216,33 @@ def build_dashboard(settings: Settings) -> None:
                     "higher throughout."
                 ),
                 caption=(
-                    "Median and upper-quartile clicks per active course-attempt record."
+                    "A typical level of recorded activity and a more active comparison."
                 ),
                 reverse=True,
                 technical_note=(
-                    "The plotted lines are medians of module-presentation summaries. "
-                    "The forecasting table uses one row per student attempt and course "
-                    "week, including explicit zero-activity weeks."
+                    "For the chart, I used medians from each course offering. For the "
+                    "forecast, I kept one row for every student attempt and course "
+                    "week, including weeks with no recorded activity."
                 ),
             ),
             _chart_slide(
                 chart_id="activity-consistency",
                 filename="engagement_consistency.png",
                 eyebrow="Activity consistency",
-                title="Why separate activity volume from consistency?",
+                title="I checked whether regular activity told a different story",
                 takeaway=(
-                    "Similar activity volumes appear across very different numbers "
-                    "of active weeks, and the recorded outcome groups overlap heavily."
+                    "Students with similar click totals could have very different "
+                    "numbers of active weeks, and the outcome groups still overlapped."
                 ),
                 explanation=(
-                    "Two students can produce a similar number of clicks per active "
-                    "week while one appears in many more course weeks. Volume and "
-                    "consistency describe different aspects of the historical record, "
-                    "so the analysis retains both."
+                    "That showed me that amount and regularity were not the same "
+                    "thing. One student might appear steadily across many weeks while "
+                    "another produces similar activity in a much shorter span, so I "
+                    "kept both measures."
                 ),
                 caution=(
-                    "Neither axis measures learning quality, and neither measure alone "
-                    "cleanly separates the four recorded course outcomes."
+                    "Neither measure tells me the quality of someone’s learning, and "
+                    "neither one neatly separates the four recorded outcomes."
                 ),
                 alt=(
                     "Scatter plot comparing mean clicks in active weeks with number "
@@ -239,17 +250,17 @@ def build_dashboard(settings: Settings) -> None:
                     "withdrawal overlap across much of the chart."
                 ),
                 caption=(
-                    "Each point is a course attempt; the horizontal axis uses a log "
-                    "scale so low and high click volumes remain visible."
+                    "Each point is one course attempt. The scale lets low and high "
+                    "click totals remain visible together."
                 ),
             ),
             _chart_slide(
                 chart_id="missing-assessments",
                 filename="assessment_missingness.png",
                 eyebrow="Missing assessments",
-                title="How much did missing assessment records differ by course?",
+                title="Missing work looked very different from course to course",
                 takeaway=(
-                    f"The percentage ranged from "
+                    f"I found percentages ranging from "
                     f"{lowest_missing['missing_rate']:.1%} in "
                     f"{lowest_missing['code_module']} "
                     f"{lowest_missing['code_presentation']} to "
@@ -258,16 +269,15 @@ def build_dashboard(settings: Settings) -> None:
                     f"{highest_missing['code_presentation']}."
                 ),
                 explanation=(
-                    "Each bar is the percentage of eligible student-assessment pairs "
-                    "without a recorded submission in one course offering. The wide "
-                    "range is why the analysis keeps course context rather than using "
-                    "one universal missing-work rule."
+                    "Each bar shows the share of expected assessments with no "
+                    "submission recorded for one course offering. The range was wide "
+                    "enough that I did not think one missing-work rule would be fair "
+                    "or useful across every course."
                 ),
                 caution=(
-                    "Differences may reflect course structure, assessment design, "
-                    "deadlines, extensions, recording practices, and circumstances "
-                    "not represented in the data. Missing work is not proof of low "
-                    "effort."
+                    "A missing record is not proof of low effort. Course design, "
+                    "deadlines, extensions, recording practices, and personal "
+                    "circumstances may all be part of the story."
                 ),
                 alt=(
                     f"Horizontal bar chart of missing assessment percentages by "
@@ -276,8 +286,8 @@ def build_dashboard(settings: Settings) -> None:
                     f"{highest_missing['missing_rate']:.1%}."
                 ),
                 caption=(
-                    "OULAD calls courses modules and course offerings module "
-                    "presentations."
+                    "OULAD uses the word module for a course and presentation for one "
+                    "offering of that course."
                 ),
                 reverse=True,
             ),
@@ -285,9 +295,9 @@ def build_dashboard(settings: Settings) -> None:
                 chart_id="submission-timing",
                 filename="submission_timing.png",
                 eyebrow="Submission timing",
-                title="Were assessments usually recorded before or after the deadline?",
+                title="I also looked at when work was submitted",
                 takeaway=(
-                    f"Typical timing ranged from "
+                    f"The typical timing ranged from "
                     f"{abs(earliest_timing['median_submission_delay_days']):g} days "
                     f"early in {earliest_timing['code_module']} "
                     f"{earliest_timing['code_presentation']} to "
@@ -295,14 +305,13 @@ def build_dashboard(settings: Settings) -> None:
                     "the latest-recorded offerings."
                 ),
                 explanation=(
-                    "A negative value means the median submission was recorded before "
-                    "the due date. A positive value means it was recorded after the "
-                    "due date. Zero means the typical recorded submission occurred on "
-                    "the deadline."
+                    "I read a negative number as days before the deadline and a "
+                    "positive number as days after it. Zero means the typical "
+                    "recorded submission landed on the due date."
                 ),
                 caution=(
-                    "The chart does not capture every extension, local policy, or "
-                    "personal circumstance that may have affected timing."
+                    "I cannot see every extension, course policy, or personal "
+                    "circumstance that may have affected when work was submitted."
                 ),
                 alt=(
                     f"Horizontal bar chart of median submission timing by course "
@@ -312,30 +321,28 @@ def build_dashboard(settings: Settings) -> None:
                     f"{latest_timing['median_submission_delay_days']:g} days after it."
                 ),
                 caption=(
-                    "Median days relative to the assessment due date; negative values "
-                    "mean early."
+                    "Typical days before or after the due date. Negative means early."
                 ),
             ),
             _chart_slide(
                 chart_id="withdrawal-timing",
                 filename="withdrawal_alignment.png",
                 eyebrow="Withdrawal timing",
-                title="What did recorded activity look like near withdrawal?",
+                title="Finally, I looked at the weeks leading up to withdrawal",
                 takeaway=(
-                    f"Median weekly clicks moved from {withdrawal_week_12:g} twelve "
+                    f"I saw median weekly clicks move from {withdrawal_week_12:g} twelve "
                     f"weeks before unregistration to {withdrawal_week_1:g} in the "
                     "week immediately before it."
                 ),
                 explanation=(
-                    "The chart aligns each withdrawing course attempt around the week "
-                    "in which unregistration was recorded. This makes relative timing "
-                    "comparable even when calendar dates differ."
+                    "I lined up each withdrawing course attempt around its recorded "
+                    "unregistration week. That let me compare the lead-up even when "
+                    "the actual calendar dates were different."
                 ),
                 caution=(
-                    "The pattern cannot explain why someone withdrew. Academic, "
+                    "This pattern cannot tell me why someone withdrew. Academic, "
                     "financial, employment, family, health, and other circumstances "
-                    "may be absent from OULAD, and the number of observable attempts "
-                    "changes across relative weeks."
+                    "may be missing from OULAD."
                 ),
                 alt=(
                     f"Line chart of activity around withdrawal. Median weekly clicks "
@@ -343,7 +350,7 @@ def build_dashboard(settings: Settings) -> None:
                     f"unregistration to {withdrawal_week_1:g} one week before it."
                 ),
                 caption=(
-                    "Median recorded clicks in weeks aligned to the unregistration date."
+                    "Typical recorded clicks as the unregistration week approached."
                 ),
                 reverse=True,
             ),
@@ -354,63 +361,63 @@ def build_dashboard(settings: Settings) -> None:
         [
             _chart_slide(
                 chart_id="model-comparison",
-                filename="model_comparison.png",
+                filename="model_overview.png",
                 eyebrow="Model comparison",
-                title="Did the historical records contain predictive information?",
+                title="The models found a pattern, but not a certain answer",
                 takeaway=(
-                    f"The calibrated logistic model reached "
-                    f"{calibrated['pr_auc']:.3f} precision-recall AUC, compared with "
-                    f"an event prevalence baseline of {prevalence['pr_auc']:.3f}."
+                    f"The boosted model ranked the upcoming assessment cases best at "
+                    f"{boosted['pr_auc']:.3f}, compared with a no-model reference of "
+                    f"{prevalence['pr_auc']:.3f}."
                 ),
                 explanation=(
-                    f"The gradient-boosted challenger ranked highest at "
-                    f"{boosted['pr_auc']:.3f}, while the calibrated logistic model "
-                    "remains the interpretable probability reference. The later 2014J "
-                    "course offerings were unseen during model training."
+                    f"The calibrated logistic model scored {calibrated['pr_auc']:.3f}. "
+                    "I used it for the alert example because its probabilities, "
+                    "contributing factors, and cutoff behavior were easier to explain "
+                    "and check. The boosted model remains the stronger ranking challenger."
                 ),
                 caution=(
-                    "The result shows some predictive information, not certainty, "
-                    "causation, or deployment readiness. It is not a diagnosis of a "
-                    "student."
+                    "Neither model explains why an assessment was missing or below 40. "
+                    "A forecast should prompt a person to review the recent record, not "
+                    "label a student or make an automatic decision."
                 ),
                 alt=(
-                    f"Horizontal bar chart comparing held-out precision-recall AUC. "
-                    f"The prevalence baseline is {prevalence['pr_auc']:.3f}, the "
-                    f"calibrated logistic model is {calibrated['pr_auc']:.3f}, and "
-                    f"the gradient-boosted model is highest at "
+                    f"Three-bar comparison of later-test precision-recall AUC, where "
+                    f"higher is better. The no-model event-rate reference is "
+                    f"{prevalence['pr_auc']:.3f}, the calibrated logistic model is "
+                    f"{calibrated['pr_auc']:.3f}, and the boosted challenger is "
                     f"{boosted['pr_auc']:.3f}."
                 ),
                 caption=(
-                    "Higher precision-recall AUC means better ranking of upcoming "
-                    "negative assessment events."
+                    "Higher is better. The complete model comparison remains available "
+                    "with the project files."
                 ),
                 technical_note=(
-                    "Precision-recall AUC summarizes how effectively a model ranks "
-                    "records with an upcoming event above records without one. A score "
-                    "of 1.0 is perfect; event prevalence supplies a useful baseline."
+                    "I used precision-recall AUC to summarize how well each model ranks "
+                    "weekly snapshots followed by a missing or below-40 next assessment "
+                    "above the other snapshots. A score of 1.0 would be perfect. The "
+                    "event rate is the no-model reference."
                 ),
             ),
             _chart_slide(
                 chart_id="calibration",
                 filename="calibration.png",
                 eyebrow="Probability quality",
-                title="Did predicted probabilities resemble what happened?",
+                title="Then I checked whether the probabilities were believable",
                 takeaway=(
-                    "Predicted and observed rates were close in lower-risk groups, "
-                    "while the highest-risk group was overestimated."
+                    "The lower predictions were fairly close to what happened, but "
+                    "the model overstated the rate for the highest group."
                 ),
                 explanation=(
-                    f"In the highest probability group, the mean prediction was "
+                    f"In that highest group, the average prediction was "
                     f"{highest_calibration_bin['mean_predicted_probability']:.0%} and "
-                    f"the observed event rate was "
+                    f"the actual event rate was "
                     f"{highest_calibration_bin['observed_event_rate']:.0%}. "
-                    "Calibration asks whether a predicted 30% risk corresponds to an "
-                    "event rate near 30% among similar records."
+                    "The simple question I was asking was: when the model says 30%, "
+                    "does something close to 30% actually happen?"
                 ),
                 caution=(
-                    "A model can rank records reasonably well while still producing "
-                    "imperfect probabilities. Ranking and probability accuracy are "
-                    "different evaluation questions."
+                    "A model can put records in a useful order while still giving "
+                    "imperfect probabilities. I had to check both."
                 ),
                 alt=(
                     "Calibration plot comparing predicted probability with observed "
@@ -418,81 +425,79 @@ def build_dashboard(settings: Settings) -> None:
                     "calibration line, while the two highest groups fall below it."
                 ),
                 caption=(
-                    "The dashed diagonal represents perfect agreement between "
-                    "predicted and observed rates."
+                    "The dashed line shows what perfect agreement would look like."
                 ),
                 reverse=True,
                 technical_note=(
-                    f"The calibrated logistic model's Brier score is "
-                    f"{calibrated['brier']:.3f}. Brier score measures squared error "
-                    "between predicted probabilities and outcomes; lower is better "
-                    "and 0 is perfect."
+                    f"I also calculated a Brier score of {calibrated['brier']:.3f}. "
+                    "It measures the error in the predicted probabilities. Lower is "
+                    "better, and 0 would be perfect."
                 ),
             ),
             _chart_slide(
                 chart_id="thresholds",
                 filename="threshold_curve.png",
                 eyebrow="Decision thresholds",
-                title="What changes when the probability cutoff moves?",
+                title="I explored what happens when the cutoff changes",
                 takeaway=(
-                    "Flagging more records finds more eventual events, but it also "
-                    "creates more false alarms."
+                    "When I flagged more records, I found more eventual events, but I "
+                    "also created more false alarms."
                 ),
                 explanation=(
-                    f"At a 50% cutoff, {int(threshold_50['records_flagged']):,} of "
-                    f"117,186 weekly records were flagged "
-                    f"({threshold_50['flag_rate']:.1%}). Precision was "
-                    f"{threshold_50['precision']:.1%}, recall was "
-                    f"{threshold_50['recall']:.1%}, and true alerts had a median "
-                    f"{threshold_50['median_true_alert_lead_days']:.0f} days of lead "
-                    "time."
+                    f"With a 50% cutoff, {int(threshold_50['records_flagged']):,} of "
+                    f"117,186 weekly snapshots were flagged "
+                    f"({threshold_50['flag_rate']:.1%}). About 62 of every 100 alerts "
+                    "were followed by a missing or below-40 next assessment, and the "
+                    "alerts found about 42 of every 100 cases that actually occurred. "
+                    f"A correct alert came a median of "
+                    f"{threshold_50['median_true_alert_lead_days']:.0f} days before "
+                    "the assessment."
                 ),
                 caution=(
-                    "There is no universally correct threshold. The appropriate "
-                    "cutoff depends on purpose, resources, consequences of errors, "
-                    "and whether flagging would actually help."
+                    "I do not think there is one correct cutoff. It depends on the "
+                    "purpose, available help, the cost of mistakes, and whether a flag "
+                    "could lead to anything useful."
                 ),
                 alt=(
                     "Line chart showing precision increasing and recall decreasing "
                     "as the percentage of weekly records flagged becomes smaller."
                 ),
                 caption=(
-                    "A threshold is the predicted-probability cutoff used to decide "
-                    "which records would be flagged."
+                    "The cutoff controls how many records the model would flag."
                 ),
                 technical_note=(
-                    "Precision is the share of flags that became events. Recall is "
-                    "the share of all events that were flagged. A false alarm is a "
-                    "flag without the event; a missed case is an event below the cutoff."
+                    "Precision is the share of my flags that became events. Recall is "
+                    "the share of all events I found. A false alarm is a flag without "
+                    "the event; a missed case is an event below the cutoff."
                 ),
             ),
             _chart_slide(
                 chart_id="forecast-timing",
                 filename="performance_by_week.png",
                 eyebrow="Forecast timing",
-                title="How did forecast quality change as more history became available?",
+                title="I also had to decide how early to make the forecast",
                 takeaway=(
-                    "Later weeks generally provided better ranking, but a later "
-                    "forecast also leaves less time for any useful response."
+                    "Later weeks usually gave the model more useful information, but "
+                    "a later forecast would leave less time to respond."
                 ),
                 explanation=(
-                    "Early in a course, the model has relatively little activity and "
-                    "assessment history. Later weekly records contain a longer "
-                    "history, which can improve the forecast while reducing lead time."
+                    "Early in a course, I had very little activity or assessment "
+                    "history to work with. Waiting gave the model a fuller record, but "
+                    "it also reduced the value of an early warning."
                 ),
                 caution=(
-                    "The chart describes held-out 2014J offerings only. Week-specific "
-                    "performance may change in another institution, period, or course "
-                    "design."
+                    "I only tested this pattern on the later 2014J offerings that were "
+                    "not used during model development. It "
+                    "could change in another year, institution, or kind of course."
                 ),
                 alt=(
-                    "Line chart showing held-out precision-recall AUC generally "
+                    "Line chart showing later-test precision-recall AUC generally "
                     "increasing after course week 2, while Brier score remains lower "
                     "in later weeks."
                 ),
                 caption=(
-                    "The practical tradeoff is earlier warning versus more complete "
-                    "information."
+                    "An earlier answer uses less information; a later answer may come "
+                    "too late to be useful."
                 ),
                 reverse=True,
             ),
@@ -507,9 +512,9 @@ def build_dashboard(settings: Settings) -> None:
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta
     name="description"
-    content="A plain-language presentation of an OULAD learning analytics project."
+    content="Jose Chavez explains what he learned from a careful study of online-course records."
   >
-  <title>Understanding Student Engagement and Course Outcomes | Jose Chavez</title>
+  <title>What I Learned from Online-Course Records | Jose Chavez</title>
   <style>
     :root {
       color-scheme: light;
@@ -701,6 +706,103 @@ def build_dashboard(settings: Settings) -> None:
     .section {
       padding: 72px 0;
       border-bottom: 1px solid var(--line);
+    }
+
+    .project-summary {
+      background: #edf5f2;
+    }
+
+    .project-summary .section-head,
+    .summary-copy,
+    .summary-conclusion {
+      max-width: 920px;
+    }
+
+    .project-summary h2 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 3.2rem;
+      font-weight: 600;
+    }
+
+    .summary-lead {
+      margin: 0;
+      color: var(--ink);
+      font-size: 1.18rem;
+      line-height: 1.65;
+    }
+
+    .summary-copy {
+      margin-top: 34px;
+    }
+
+    .summary-copy p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.72;
+    }
+
+    .summary-copy p + p {
+      margin-top: 20px;
+    }
+
+    .summary-copy strong {
+      color: var(--ink);
+    }
+
+    .summary-findings {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      margin-top: 34px;
+      border: 1px solid var(--line);
+      background: var(--line);
+    }
+
+    .summary-finding {
+      min-width: 0;
+      padding: 24px;
+      background: var(--white);
+    }
+
+    .summary-finding h3 {
+      margin: 0 0 18px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.35rem;
+      line-height: 1.25;
+    }
+
+    .summary-finding p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.62;
+    }
+
+    .summary-finding p + p {
+      margin-top: 14px;
+    }
+
+    .summary-finding strong {
+      color: var(--ink);
+    }
+
+    .summary-conclusion {
+      margin-top: 34px;
+      padding: 24px 0 0 24px;
+      border-top: 1px solid var(--line);
+      border-left: 5px solid var(--coral);
+    }
+
+    .summary-conclusion h3 {
+      margin: 0 0 10px;
+      font-family: inherit;
+      font-size: 1.05rem;
+    }
+
+    .summary-conclusion p {
+      margin: 0;
+      color: var(--ink);
+      font-size: 1.04rem;
+      line-height: 1.7;
     }
 
     .section-alt {
@@ -1024,6 +1126,31 @@ def build_dashboard(settings: Settings) -> None:
       font-size: 0.88rem;
     }
 
+    .forecast-negative {
+      max-width: 920px;
+      margin-top: 42px;
+      padding: 28px;
+      border: 1px solid #d9b8b2;
+      border-left: 5px solid var(--coral);
+      background: var(--white);
+    }
+
+    .forecast-negative h3 {
+      margin: 0 0 12px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.7rem;
+    }
+
+    .forecast-negative p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.68;
+    }
+
+    .forecast-negative p + p {
+      margin-top: 12px;
+    }
+
     .method-intro {
       max-width: 850px;
       color: var(--muted);
@@ -1145,6 +1272,18 @@ def build_dashboard(settings: Settings) -> None:
       margin: 0;
     }
 
+    .footer-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    .footer-links a {
+      color: var(--blue-dark);
+      font-weight: 750;
+    }
+
     @media (max-width: 900px) {
       h1 {
         font-size: 3.15rem;
@@ -1219,8 +1358,16 @@ def build_dashboard(settings: Settings) -> None:
         line-height: 1.5;
       }
 
-      .page-nav {
-        display: none;
+      .project-summary h2 {
+        font-size: 2.35rem;
+      }
+
+      .summary-lead {
+        font-size: 1.04rem;
+      }
+
+      .summary-conclusion {
+        padding-left: 16px;
       }
 
       .why-section {
@@ -1231,6 +1378,7 @@ def build_dashboard(settings: Settings) -> None:
       .question-list,
       .metrics,
       .finding-summary,
+      .summary-findings,
       .evaluation-flow,
       .model-summary,
       .limits-grid,
@@ -1270,179 +1418,213 @@ def build_dashboard(settings: Settings) -> None:
   </style>
 </head>
 <body>
-  <a class="skip-link" href="#main-content">Skip to project content</a>
+  <a class="skip-link" href="#main-content">Skip to my findings</a>
 
-  <nav class="project-bar" aria-label="Project resources">
+  <nav class="project-bar" aria-label="Ways to explore this project">
     <div class="shell">
       <a class="project-name" href="/#/data-science/learning-analytics">
-        Jose Chavez / Learning Analytics
+        Jose Chavez / My Learning Analytics Project
       </a>
       <div class="project-links">
-        <a href="/#/data-science/learning-analytics">Project case study</a>
-        <a href="$repository">GitHub repository</a>
-        <a href="$repository/blob/main/docs/methodology.md">Methodology</a>
+        <a href="/#/data-science/learning-analytics">Read my project story</a>
+        <a href="$repository">See the files on GitHub</a>
+        <a href="$repository/blob/main/docs/methodology.md">Read my method notes</a>
       </div>
     </div>
   </nav>
 
   <header class="hero">
     <div class="shell">
-      <p class="eyebrow">Learning Analytics Project</p>
-      <h1>Understanding Student Engagement, Assessments, and Course Outcomes</h1>
+      <p class="eyebrow">Learning Analytics</p>
+      <h1>Disengagement showed up before the course was over.</h1>
       <p class="hero-intro">
-        This project uses anonymized historical online-course data to study how
-        recorded platform activity and assessment behavior relate to course
-        outcomes. It also tests whether information available during a course can
-        help estimate the risk of a poor result on the next assessment.
+        I worked with real, anonymous Open University records to understand when
+        students began to pull away from an online course and whether the information
+        available at the time could support earlier help. Nearly one in three course
+        attempts ended in withdrawal, and recorded activity had already fallen sharply
+        before the course ended. The records showed when concern might be worth a closer
+        look, but they could not explain why a student struggled.
       </p>
-      <p class="responsible-use">
-        This is a historical research and portfolio project. It does not monitor
-        current students, recommend interventions, or make decisions about individuals.
-      </p>
-      <nav class="page-nav" aria-label="Presentation sections">
+      <nav class="page-nav" aria-label="Parts of my project story">
         <ul>
-          <li><a href="#questions">Questions</a></li>
-          <li><a href="#data">Data</a></li>
-          <li><a href="#key-findings">Key findings</a></li>
-          <li><a href="#forecasting">Forecasting</a></li>
-          <li><a href="#methods">How it was built</a></li>
-          <li><a href="#limits">Limitations</a></li>
+          <li><a href="#key-findings">What I found</a></li>
+          <li><a href="#questions">What I asked</a></li>
+          <li><a href="#data">The records I used</a></li>
+          <li><a href="#forecasting">My forecast test</a></li>
+          <li><a href="#methods">How I built the analysis</a></li>
+          <li><a href="#limits">What I cannot claim</a></li>
         </ul>
       </nav>
     </div>
   </header>
 
   <main id="main-content">
+    <section
+      class="section project-summary"
+      id="key-findings"
+      aria-labelledby="key-findings-title"
+    >
+      <div class="shell">
+        <div class="section-head">
+          <p class="eyebrow">What this project found</p>
+          <h2 id="key-findings-title">Three findings in one minute</h2>
+          <p class="summary-lead">
+            OULAD contains course outcomes, assessment records, and online-platform
+            activity from selected Open University courses in 2013 and 2014. I used it
+            to ask where disengagement became visible, what varied from course to
+            course, and whether a weekly record could help someone notice an upcoming
+            assessment problem.
+          </p>
+        </div>
+
+        <div class="summary-findings">
+          <article class="summary-finding">
+            <p class="eyebrow">Finding 1</p>
+            <h3>Disengagement appeared before withdrawal.</h3>
+            <p>
+              <strong>$withdrawals of $attempts course attempts
+              ($withdrawal_rate) ended in withdrawal.</strong> Typical weekly clicks
+              fell from $week_2_median in week 2 to $week_12_median in week 12, and
+              from $withdrawal_week_12 twelve weeks before withdrawal to
+              $withdrawal_week_1 one week before it.
+            </p>
+            <p>
+              <strong>Why it matters:</strong> a support team may have time to review a
+              changing pattern before the course ends. Clicks show recorded activity,
+              not motivation, learning, or a reason for withdrawal.
+            </p>
+          </article>
+          <article class="summary-finding">
+            <p class="eyebrow">Finding 2</p>
+            <h3>Course context changed the meaning of missing work.</h3>
+            <p>
+              Missing submissions ranged from <strong>$missing_low in
+              $missing_low_label</strong> to <strong>$missing_high in
+              $missing_high_label</strong>. A single rule for every course would have
+              hidden a very large difference.
+            </p>
+            <p>
+              <strong>Why it matters:</strong> course design and recording practices
+              need to be checked before interpreting a student's missing work.
+            </p>
+          </article>
+          <article class="summary-finding">
+            <p class="eyebrow">Finding 3</p>
+            <h3>The next assessment could be anticipated, with limits.</h3>
+            <p>
+              In the later test, <strong>$test_events of $test_snapshots weekly
+              snapshots ($test_prevalence)</strong> were followed by a missing or
+              below-40 next assessment. At a 50% cutoff, the calibrated logistic
+              model's alerts were correct <strong>$threshold_precision</strong> of the
+              time and found <strong>$threshold_recall</strong> of the actual cases.
+            </p>
+            <p>
+              <strong>Why it matters:</strong> this could help prioritize a record for
+              human review. It missed more than half of the cases and should never make
+              an automatic decision about a student.
+            </p>
+          </article>
+        </div>
+
+        <div class="summary-conclusion">
+          <h3>Overall conclusion</h3>
+          <p>
+            The records were useful for seeing change over time and deciding where a
+            closer human review might be worthwhile. They were not strong enough to
+            determine an individual student's outcome, and they do not show that
+            clicks, missed work, or any other recorded behavior caused that outcome.
+          </p>
+        </div>
+      </div>
+    </section>
+
     <section class="section why-section shell" aria-labelledby="why-title">
       <div class="section-head">
-        <p class="eyebrow">Why this matters</p>
-        <h2 id="why-title">Online-course data is easy to count and easy to misread</h2>
+        <p class="eyebrow">Why I chose this</p>
+        <h2 id="why-title">
+          A click can tell me what happened on a platform. It cannot tell me why.
+        </h2>
         <p>
-          Learning platforms create detailed records, but a click is not the same as
-          learning and a forecast is not the same as an explanation. This project
-          shows how those records can be organized into useful historical evidence
-          while keeping context, uncertainty, and responsible limits visible.
+          That distinction shaped the whole project. I wanted to find useful patterns,
+          but I did not want to turn platform activity into a story about motivation,
+          intelligence, or effort. So at every step I asked two things: what does this
+          record show me, and what would I be guessing?
         </p>
       </div>
     </section>
 
     <section class="section shell" id="questions" aria-labelledby="questions-title">
       <div class="section-head">
-        <p class="eyebrow">What this project asks</p>
-        <h2 id="questions-title">Five questions guide the analysis</h2>
+        <p class="eyebrow">Where I began</p>
+        <h2 id="questions-title">I focused on the decisions behind the numbers</h2>
         <p>
-          These questions organize the charts that follow, moving from description
-          to forecasting without treating a statistical association as a cause.
+          I wanted the analysis to answer questions an education team could actually
+          face, while keeping a clear line between a useful pattern and an explanation
+          of a student's life.
         </p>
       </div>
       <ol class="question-list">
-        <li>How did recorded online activity change across the course?</li>
-        <li>How did missing assessments and submission timing differ across courses?</li>
-        <li>What did recorded activity look like near withdrawal?</li>
-        <li>Could information available so far help forecast the next assessment?</li>
-        <li>How reliable were the model's rankings and predicted probabilities?</li>
+        <li>How did online activity change as a course moved forward?</li>
+        <li>Did missing work and submission timing look the same in every course?</li>
+        <li>What happened to recorded activity before a withdrawal?</li>
+        <li>Could the information available so far help me forecast the next assessment?</li>
+        <li>When the model gave a probability, how much could I trust it?</li>
       </ol>
     </section>
 
     <section class="section section-alt shell" id="data" aria-labelledby="data-title">
       <div class="section-head">
-        <p class="eyebrow">The historical data</p>
-        <h2 id="data-title">What is OULAD?</h2>
+        <p class="eyebrow">The records I worked with</p>
+        <h2 id="data-title">I used a real, anonymous set of Open University records</h2>
         <p class="dataset-intro">
-          The Open University Learning Analytics Dataset (OULAD) is an anonymized
-          historical dataset containing course information, assessment records,
-          recorded student outcomes, and activity on an online learning platform.
-          It covers selected Open University course offerings from 2013 and 2014.
+          It is called the Open University Learning Analytics Dataset, or OULAD. It
+          brings together course information, assessment records, final outcomes, and
+          activity from an online learning platform. The records cover selected Open
+          University course offerings from 2013 and 2014.
         </p>
       </div>
       <dl class="metrics">
         <div>
           <dt><strong>$modules</strong><span>courses</span></dt>
-          <dd><small>Called modules in OULAD</small></dd>
+          <dd><small>OULAD calls them modules</small></dd>
         </div>
         <div>
           <dt><strong>$presentations</strong><span>course offerings</span></dt>
-          <dd><small>Called module presentations</small></dd>
+          <dd><small>One course taught in one period</small></dd>
         </div>
         <div>
           <dt><strong>$students</strong><span>individual students</span></dt>
-          <dd><small>Unique anonymized identifiers</small></dd>
+          <dd><small>Each person has an anonymous identifier</small></dd>
         </div>
         <div>
           <dt><strong>$attempts</strong><span>course enrollments or attempts</span></dt>
-          <dd><small>One student taking one offering</small></dd>
+          <dd><small>One student in one course offering</small></dd>
         </div>
         <div>
           <dt><strong>$assessments</strong><span>assessments</span></dt>
-          <dd><small>Coursework and exam definitions</small></dd>
+          <dd><small>Coursework and exams</small></dd>
         </div>
         <div>
           <dt><strong>$activity_millions</strong><span>recorded online interactions</span></dt>
-          <dd><small>$activity_exact exact activity records</small></dd>
+          <dd><small>$activity_exact separate records</small></dd>
         </div>
       </dl>
       <p class="source-note">
-        The same student can appear in more than one course attempt. A recorded click
-        indicates platform use, but it does not directly measure effort, motivation,
-        attention, understanding, learning, or offline study.
-        <a href="$source_url">View the official UCI source.</a>
+        One detail mattered right away: the same student can appear in more than one
+        course attempt. A click only shows recorded platform use. It does not show me
+        effort, attention, understanding, motivation, learning, or offline study.
+        <a href="$source_url">See the original dataset.</a>
       </p>
-    </section>
-
-    <section
-      class="section shell"
-      id="key-findings"
-      aria-labelledby="key-findings-title"
-    >
-      <div class="section-head">
-        <p class="eyebrow">What I found</p>
-        <h2 id="key-findings-title">The main findings in one minute</h2>
-        <p>
-          Each statement below comes from the downloaded archive, PostgreSQL analysis
-          tables, or saved held-out model results.
-        </p>
-      </div>
-      <ul class="finding-summary">
-        <li>
-          <strong>Withdrawal was a substantial recorded outcome.</strong>
-          <span>$withdrawals of $attempts attempts, or $withdrawal_rate, ended in
-          withdrawal. The data does not record every reason why.</span>
-        </li>
-        <li>
-          <strong>Recorded activity changed over the course.</strong>
-          <span>The typical active-record median peaked at $week_2_median clicks in
-          week 2 and was $week_12_median by week 12.</span>
-        </li>
-        <li>
-          <strong>Missing assessments varied greatly by course offering.</strong>
-          <span>Observed rates ranged from $missing_low to $missing_high, so one
-          universal missing-work rule would ignore course context.</span>
-        </li>
-        <li>
-          <strong>Recorded activity became quieter near withdrawal.</strong>
-          <span>Median clicks moved from $withdrawal_week_12 twelve weeks before
-          unregistration to $withdrawal_week_1 one week before it.</span>
-        </li>
-        <li>
-          <strong>The assessment forecast found some useful signal.</strong>
-          <span>The interpretable calibrated model reached $calibrated_pr precision-recall
-          AUC against a $prevalence_pr prevalence baseline.</span>
-        </li>
-        <li>
-          <strong>The forecast remained uncertain and context-specific.</strong>
-          <span>Probability errors remained, performance changed by week, and results
-          may not transfer to another institution or period.</span>
-        </li>
-      </ul>
     </section>
 
     <section class="section section-alt shell" aria-labelledby="analysis-title">
       <div class="section-head">
-        <p class="eyebrow">The descriptive story</p>
-        <h2 id="analysis-title">What the historical records show</h2>
+        <p class="eyebrow">How the story unfolded</p>
+        <h2 id="analysis-title">I moved from outcomes to activity, timing, and withdrawal</h2>
         <p>
-          Each chart answers one project question. The takeaway appears first, followed
-          by what was measured and the most important interpretation limit.
+          Let me walk you through the charts in the same order I explored the data.
+          For each one, I explain what caught my attention and what I would not read
+          into it.
         </p>
       </div>
       <div class="chart-sequence">
@@ -1456,67 +1638,71 @@ def build_dashboard(settings: Settings) -> None:
       aria-labelledby="forecasting-title"
     >
       <div class="section-head">
-        <p class="eyebrow">Forecasting</p>
+        <p class="eyebrow">My forecasting experiment</p>
         <h2 id="forecasting-title">
-          Can course information available so far help forecast the next assessment?
+          Weekly records helped anticipate the next poor assessment result, but not
+          an individual withdrawal.
         </h2>
         <p>
-          The historical records contained some useful predictive information, but
-          the forecast remained uncertain. It should be treated as an analytical
-          demonstration, not a diagnosis or an automated decision about an individual.
+          At the end of a course week, I used the information available so far to
+          estimate whether one student's next non-exam assessment would be missing by
+          its due date or receive a score below 40. The model could help an instructor
+          decide which recent records to review, but it was not reliable enough to
+          label a student or make an automatic decision.
         </p>
       </div>
 
       <div class="forecast-question">
-        <h3>What exactly is being forecast?</h3>
+        <h3>One weekly snapshot was one student in one course attempt</h3>
         <p>
-          At the end of each course week, the model estimates whether the next non-exam
-          assessment will be missing by its due date or will receive a recorded score
-          below 40. Each weekly snapshot represents what would have been known by the
-          end of that week. Later activity and future assessment results are excluded.
+          I included a snapshot only when that student had an upcoming non-exam
+          assessment with a known due date. I gave the model only the activity,
+          submissions, and assessment results that could have been known by the end
+          of that week. Later activity and future results stayed out of the inputs.
         </p>
       </div>
 
       <div class="evaluation-flow" aria-label="Model evaluation sequence">
         <div>
           <span>01</span>
-          <strong>Learn from 2013</strong>
-          <p>The models were trained using earlier course offerings.</p>
+          <strong>I developed the models with 2013 courses</strong>
+          <p>The models learned from course offerings in the earlier year.</p>
         </div>
         <div>
           <span>02</span>
-          <strong>Choose with 2014B</strong>
-          <p>A separate group supported model selection and probability calibration.</p>
+          <strong>I checked my choices with 2014B</strong>
+          <p>These first 2014 offerings helped me choose and adjust the models.</p>
         </div>
         <div>
           <span>03</span>
-          <strong>Test on unseen 2014J</strong>
-          <p>Complete later offerings were held back for the final evaluation.</p>
+          <strong>I tested once on later 2014J courses</strong>
+          <p>These later offerings stayed hidden until the final evaluation.</p>
         </div>
       </div>
       <p class="source-note">
-        Weekly records from the same course offering were kept together instead of
-        being randomly scattered across training and testing. This temporal held-out
-        design reduces the chance that closely related records appear on both sides of
-        the evaluation.
+        B and J are the source dataset's labels for earlier- and later-year
+        teaching periods.
+        I kept complete course offerings together during model evaluation instead
+        of randomly splitting related weekly records. Otherwise, records from the
+        same offering could appear in both training and testing and make the final
+        score look better than it really was.
       </p>
 
       <div class="model-summary" aria-label="Interpretable model summary">
         <div>
           <strong>$calibrated_pr</strong>
-          <span>Precision-recall AUC</span>
+          <span>How well the model ranked upcoming events</span>
           <p>
-            Summarizes how well the model ranks upcoming negative assessment events
-            above other records. Higher is better; 1.0 is perfect. The held-out event
-            prevalence baseline was $prevalence_pr.
+            Higher is better and 1.0 would be perfect. My basic comparison score was
+            $prevalence_pr. The model improved on it, but was far from perfect.
           </p>
         </div>
         <div>
           <strong>$calibrated_brier</strong>
-          <span>Brier score</span>
+          <span>How far the probabilities were from reality</span>
           <p>
-            Measures how close predicted probabilities were to what happened. Lower
-            is better; 0 represents perfect probability predictions.
+            Lower is better and 0 would mean perfect probabilities. I use the
+            technical name Brier score in the detailed notes below.
           </p>
         </div>
       </div>
@@ -1524,169 +1710,211 @@ def build_dashboard(settings: Settings) -> None:
       <div class="chart-sequence">
         $forecast_slides
       </div>
+
+      <article class="forecast-negative" aria-labelledby="withdrawal-model-title">
+        <p class="eyebrow">A separate experiment</p>
+        <h3 id="withdrawal-model-title">
+          The withdrawal model produced too many false alerts for individual use.
+        </h3>
+        <p>
+          I separately tested whether the same kind of weekly snapshot could identify
+          a recorded withdrawal within the next 28 days. In the later 2014J test
+          records, withdrawal occurred after only <strong>$withdrawal_prevalence</strong>
+          of the snapshots. The model flagged <strong>$withdrawal_flag_rate</strong>
+          of all snapshots, but only <strong>$withdrawal_precision</strong> of its
+          alerts were correct. It found <strong>$withdrawal_recall</strong> of the
+          withdrawals that did occur, but the large number of false alerts made the
+          result unsuitable for decisions about individuals.
+        </p>
+        <p>
+          I report this unsuccessful result because it shows where the available
+          records did not support the intended use, even though 8.0% precision was
+          numerically above the 3.9% event rate.
+        </p>
+      </article>
+
+      <details class="technical-note">
+        <summary>See the complete model comparison</summary>
+        <figure>
+          <img
+            src="assets/model_comparison.png"
+            alt="Later-test precision-recall AUC for all assessment models."
+            loading="lazy"
+            decoding="async"
+          >
+          <figcaption>
+            The overview chart shows the no-model reference, calibrated logistic
+            model, and boosted challenger. This chart preserves every comparison.
+          </figcaption>
+        </figure>
+      </details>
     </section>
 
     <section class="section shell" id="methods" aria-labelledby="methods-title">
       <div class="section-head">
         <p class="eyebrow">How I built the analysis</p>
-        <h2 id="methods-title">A reproducible path from source files to findings</h2>
+        <h2 id="methods-title">I kept a clear trail from the original files to every result</h2>
         <p class="method-intro">
-          I used Python to inspect and validate the original files, PostgreSQL and SQL
-          to organize the data into consistent analysis tables, and Python again for
-          statistics, visualization, forecasting, and model evaluation.
+          I did not want the charts to be a black box. I checked the original files
+          with Python, organized them in PostgreSQL, asked my questions with SQL, and
+          returned to Python for the charts and forecasting experiment.
         </p>
       </div>
-      <div class="method-flow" aria-label="Analysis workflow">
+      <div class="method-flow" aria-label="The path I followed through the data">
         <div>
           <span>01</span>
-          <strong>OULAD source</strong>
-          <p>Checksum-verified historical CSV files</p>
+          <strong>I got the original records</strong>
+          <p>I downloaded the historical OULAD files and checked that they arrived unchanged.</p>
         </div>
         <div>
           <span>02</span>
-          <strong>Python audit</strong>
-          <p>Rows, fields, missing values, and source scale</p>
+          <strong>I opened and checked them</strong>
+          <p>I counted the rows, read the columns, and looked for missing information.</p>
         </div>
         <div>
           <span>03</span>
-          <strong>PostgreSQL</strong>
-          <p>Raw, staging, and relational core tables</p>
+          <strong>I organized the tables</strong>
+          <p>I used PostgreSQL to connect the course, student, activity, and assessment records.</p>
         </div>
         <div>
           <span>04</span>
-          <strong>SQL analysis</strong>
-          <p>Quality tests, analytical tables, and weekly snapshots</p>
+          <strong>I asked questions with SQL</strong>
+          <p>I checked the data and built one consistent set of weekly and course summaries.</p>
         </div>
         <div>
           <span>05</span>
-          <strong>Python outputs</strong>
-          <p>Statistics, charts, forecasts, and evaluation</p>
+          <strong>I explained the results</strong>
+          <p>I used Python for the charts, the forecast, and the final tests.</p>
         </div>
       </div>
       <p class="technology-line">
-        <strong>Technologies and methods:</strong> PostgreSQL 16, SQL, Python, pandas,
-        scikit-learn, relational modeling, window functions, time-aware feature
-        engineering, probability calibration, threshold analysis, and accessible
-        data visualization.
+        <strong>The tools I used:</strong> PostgreSQL 16, SQL, Python, pandas, and
+        scikit-learn. I also practiced connecting related tables, building fair
+        week-by-week comparisons, checking probability quality, and making the charts
+        readable without hiding uncertainty.
       </p>
       <details>
-        <summary>Technical note: consistent analytical definitions</summary>
+        <summary>See the more technical details</summary>
         <p>
-          SQL defines the analytical contract, meaning that key metrics, table grains,
-          and weekly records are created through consistent, reviewable definitions
-          rather than being recalculated differently for each chart. The project
-          includes six database schemas, materialized analysis tables, indexes,
-          captured query plans, and twenty-four quality profiles and tests.
+          I defined the important measures once in SQL so I did not quietly calculate
+          them a different way for each chart. The project includes six organized
+          database areas, saved analysis tables, indexes for faster queries, recorded
+          query plans, and twenty-four data checks.
         </p>
       </details>
       <div class="closing-links">
-        <a class="button-link" href="$repository/blob/main/docs/sql-mastery.md">
-          Read the SQL design
+        <a class="button-link" href="$repository/blob/main/docs/sql-design.md">
+          See how I designed the SQL
         </a>
         <a class="button-link" href="$repository/blob/main/sql/gallery/queries.sql">
-          Open the SQL query gallery
+          Read the actual queries
         </a>
-        <a class="button-link" href="$repository/blob/main/docs/model-card.md">
-          Read the model card
+        <a class="button-link" href="$repository/blob/main/docs/forecast-evaluation.md">
+          How I evaluated the assessment forecast
         </a>
       </div>
     </section>
 
     <section class="section limits shell" id="limits" aria-labelledby="limits-title">
       <div class="section-head">
-        <p class="eyebrow">Responsible interpretation</p>
-        <h2 id="limits-title">What this analysis cannot tell us</h2>
+        <p class="eyebrow">What I will not claim</p>
+        <h2 id="limits-title">These records show patterns, not the full lives behind them</h2>
         <p>
-          <strong>Clicks are traces, not explanations.</strong> The project preserves
-          uncertainty because the records omit much of the context needed to understand
-          any individual experience.
+          The biggest lesson for me was that a detailed record can still be incomplete.
+          I can describe the patterns I found, but I cannot turn them into an
+          explanation of any individual student.
         </p>
       </div>
       <ul class="limits-grid">
-        <li>The anonymized data covers selected Open University courses from 2013-2014.</li>
-        <li>Platform clicks do not directly measure learning, attention, or motivation.</li>
-        <li>Students may study offline or use resources not represented in the records.</li>
-        <li>Reasons for withdrawal are not fully represented in the dataset.</li>
-        <li>Course differences may reflect design, deadlines, policy, or recording practice.</li>
-        <li>Historical associations do not establish that one behavior caused an outcome.</li>
-        <li>Results may not generalize to other years, institutions, or course structures.</li>
-        <li>The forecasts should not be used as an automated decision system.</li>
+        <li>I only studied selected Open University courses from 2013 and 2014.</li>
         <li>
-          Predictions are not statements about character, intelligence, motivation,
-          ability, or potential.
+          I cannot see offline study, unrecorded resources, or everything happening
+          in a student's life.
         </li>
         <li>
-          Fairness in another setting would require local validation, governance, and
-          meaningful participation from affected people.
+          I do not know every reason for a late assessment, missing submission, or
+          withdrawal.
+        </li>
+        <li>A pattern in the records does not prove that one behavior caused an outcome.</li>
+        <li>I would expect the results to change in another year, school, or kind of course.</li>
+        <li>
+          I would never treat a prediction as a statement about character,
+          intelligence, motivation, ability, or potential.
         </li>
       </ul>
     </section>
 
     <section class="section shell" id="skills" aria-labelledby="skills-title">
       <div class="section-head">
-        <p class="eyebrow">Professional relevance</p>
-        <h2 id="skills-title">What this project demonstrates</h2>
+        <p class="eyebrow">What I learned by doing it</p>
+        <h2 id="skills-title">This project made me connect the whole process</h2>
         <p>
-          The value of the project is not only the final model. It is the complete,
-          reviewable process from a large relational source to a careful public
-          explanation.
+          The model was only one part of the work. The real challenge was staying with
+          the same question from the messy original files through the database,
+          analysis, testing, and explanation.
         </p>
       </div>
       <ul class="skills-list">
-        <li>Translating a complex relational dataset into usable analytical tables</li>
-        <li>Designing reproducible PostgreSQL and SQL data pipelines</li>
-        <li>Conducting exploratory and statistical analysis</li>
-        <li>Creating weekly, time-aware forecasting features</li>
-        <li>Preventing future information from leaking into model training</li>
-        <li>Evaluating ranking, probability quality, thresholds, and timing</li>
-        <li>Communicating uncertainty, responsible-use limits, and negative results</li>
-        <li>Presenting one analysis to both technical and nontechnical audiences</li>
+        <li>I turned seven linked source files into tables I could question and check.</li>
+        <li>
+          I wrote a repeatable PostgreSQL and SQL workflow instead of relying on
+          manual steps.
+        </li>
+        <li>I built the forecast one week at a time without letting future information slip in.</li>
+        <li>I tested the model's ranking, probabilities, cutoffs, and timing separately.</li>
+        <li>
+          I learned to explain a useful result without pretending it was more
+          certain than it was.
+        </li>
       </ul>
     </section>
 
     <section class="section section-alt shell" id="glossary" aria-labelledby="glossary-title">
       <div class="section-head">
-        <p class="eyebrow">Plain-language reference</p>
-        <h2 id="glossary-title">Terms used on this page</h2>
+        <p class="eyebrow">A little help with the terminology</p>
+        <h2 id="glossary-title">Here are the few technical terms I still use</h2>
       </div>
       <details class="glossary">
-        <summary>Open the compact glossary</summary>
+        <summary>Open my plain-language glossary</summary>
         <dl class="terms">
           <dt>OULAD</dt>
-          <dd>The Open University Learning Analytics Dataset, an anonymized historical dataset.</dd>
+          <dd>The anonymous historical Open University records I used for this project.</dd>
           <dt>Course or module</dt>
-          <dd>A course. OULAD uses the term module.</dd>
+          <dd>OULAD says module where I would normally say course.</dd>
           <dt>Course offering</dt>
-          <dd>One course delivered in one period. OULAD calls this a presentation.</dd>
+          <dd>One course taught during one period. OULAD calls this a presentation.</dd>
           <dt>Course attempt</dt>
           <dd>One student taking one course offering. A student can have multiple attempts.</dd>
           <dt>Online activity or click</dt>
           <dd>
-            A recorded interaction with the online learning platform, not a measure
-            of attention.
+            An action recorded by the learning platform. I do not treat it as proof of
+            attention or learning.
           </dd>
           <dt>Weekly snapshot</dt>
-          <dd>A record of information available at the end of a particular course week.</dd>
+          <dd>The information I could have known at the end of one course week.</dd>
           <dt>Forecast target</dt>
-          <dd>The event being estimated: a missing or below-40 next non-exam assessment.</dd>
-          <dt>Held-out test data</dt>
-          <dd>Later course offerings kept unseen until the final model evaluation.</dd>
+          <dd>What I asked the model to estimate: a missing or below-40 next assessment.</dd>
+          <dt>Later test data</dt>
+          <dd>Later course offerings I did not use until the final model test.</dd>
           <dt>Precision</dt>
-          <dd>The share of flagged weekly records that later became target events.</dd>
+          <dd>Of everything I flagged, the share that later became an event.</dd>
           <dt>Recall</dt>
-          <dd>The share of all target events that the chosen cutoff flagged.</dd>
+          <dd>Of all the events, the share my chosen cutoff managed to find.</dd>
           <dt>Precision-recall AUC</dt>
-          <dd>A summary of how well the model ranks target events above other records.</dd>
+          <dd>
+            One number summarizing how well the model put upcoming events above
+            other records.
+          </dd>
           <dt>Brier score</dt>
-          <dd>A measure of predicted-probability error. Lower values are better.</dd>
+          <dd>A measure of error in the predicted probabilities. Lower is better.</dd>
           <dt>Calibration</dt>
-          <dd>Agreement between predicted probabilities and observed event rates.</dd>
+          <dd>My check of whether predicted probabilities matched what actually happened.</dd>
           <dt>Threshold</dt>
-          <dd>The probability cutoff above which a weekly record would be flagged.</dd>
+          <dd>The probability cutoff I used to decide which records to flag.</dd>
           <dt>False alarm</dt>
-          <dd>A flagged record for which the target event did not occur.</dd>
+          <dd>A record I flagged even though the event did not happen.</dd>
           <dt>Missed case</dt>
-          <dd>A target event that fell below the chosen probability cutoff.</dd>
+          <dd>An event that happened even though its probability stayed below my cutoff.</dd>
         </dl>
       </details>
     </section>
@@ -1695,10 +1923,15 @@ def build_dashboard(settings: Settings) -> None:
   <footer>
     <div class="shell">
       <p>
-        Generated from versioned PostgreSQL analysis tables and saved Python outputs.
-        Source, tests, and complete methodology are available in the
-        <a href="$repository">public project repository</a>.
+        This page uses the same PostgreSQL tables and saved Python results as the
+        analysis. You can read my source files, tests, and full method in
+        the <a href="$repository">public project repository</a>.
       </p>
+      <nav class="footer-links" aria-label="Contact Jose Chavez">
+        <a href="https://www.linkedin.com/in/jose-chavez-79841a1b4/">LinkedIn</a>
+        <a href="https://github.com/FollowingJCABIC">GitHub</a>
+        <a href="mailto:jose.gj.chavez@gmail.com">Email</a>
+      </nav>
     </div>
   </footer>
 </body>
@@ -1716,15 +1949,38 @@ def build_dashboard(settings: Settings) -> None:
         activity_exact=f"{scale['activity_records']:,}",
         withdrawals=f"{withdrawals:,}",
         withdrawal_rate=f"{withdrawal_rate:.1%}",
+        week_0_median=f"{week_0_median:g}",
         week_2_median=f"{week_2_median:g}",
         week_12_median=f"{week_12_median:g}",
         missing_low=f"{lowest_missing['missing_rate']:.1%}",
+        missing_low_n=f"{int(lowest_missing['eligible_student_assessments']):,}",
+        missing_low_label=(
+            f"{lowest_missing['code_module']} "
+            f"{lowest_missing['code_presentation']}"
+        ),
         missing_high=f"{highest_missing['missing_rate']:.1%}",
+        missing_high_n=f"{int(highest_missing['eligible_student_assessments']):,}",
+        missing_high_label=(
+            f"{highest_missing['code_module']} "
+            f"{highest_missing['code_presentation']}"
+        ),
         withdrawal_week_12=f"{withdrawal_week_12:g}",
         withdrawal_week_1=f"{withdrawal_week_1:g}",
         calibrated_pr=f"{calibrated['pr_auc']:.3f}",
         prevalence_pr=f"{prevalence['pr_auc']:.3f}",
         calibrated_brier=f"{calibrated['brier']:.3f}",
+        test_snapshots=f"{test_snapshots:,}",
+        test_events=f"{test_events:,}",
+        test_prevalence=f"{float(prevalence['prevalence']):.1%}",
+        records_flagged=f"{records_flagged:,}",
+        true_alerts=f"{true_alerts:,}",
+        threshold_precision=f"{float(threshold_50['precision']):.1%}",
+        threshold_recall=f"{float(threshold_50['recall']):.1%}",
+        median_lead_days=f"{int(threshold_50['median_true_alert_lead_days']):,}",
+        withdrawal_prevalence=f"{float(withdrawal_test['prevalence']):.1%}",
+        withdrawal_flag_rate=f"{float(withdrawal_test['flag_rate']):.1%}",
+        withdrawal_precision=f"{float(withdrawal_test['precision']):.1%}",
+        withdrawal_recall=f"{float(withdrawal_test['recall']):.1%}",
         analysis_slides=analysis_slides,
         forecast_slides=forecast_slides,
     )

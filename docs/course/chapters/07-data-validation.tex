@@ -1,0 +1,307 @@
+\chapter{Data Validation as an Executable Contract}
+\label{ch:data-validation}
+
+\begin{learningobjectives}
+After completing this chapter, you will be able to:
+\begin{itemize}
+  \item distinguish validation from cleaning and profiling;
+  \item classify source, key, relationship, range, category, and temporal checks;
+  \item write duplicate, orphan, range, and category validation queries;
+  \item interpret error, warning, and informational severity;
+  \item explain why zero failing rows is meaningful only with a stated rule; and
+  \item use the project's persisted quality results to decide whether analysis
+    may continue.
+\end{itemize}
+\end{learningobjectives}
+
+\section{Validation is not decoration}
+
+\term{Data validation} compares observed data with an explicit contract.
+\term{Data cleaning} transforms values or records according to a documented
+rule. \term{Profiling} describes the data without necessarily declaring it
+valid or invalid.
+
+\begin{plainlanguage}
+Profiling says ``1,111 values are missing.'' Validation says whether that
+condition violates a rule. Cleaning says what transformation, if any, should
+follow. The three steps answer different questions.
+\end{plainlanguage}
+
+The project persists every SQL check in \texttt{quality.run\_results} with:
+\begin{itemize}
+  \item run timestamp;
+  \item check name;
+  \item severity;
+  \item number of failing rows;
+  \item status; and
+  \item human-readable detail.
+\end{itemize}
+
+\section{Severity}
+
+\begin{table}[htbp]
+\centering
+\caption{Implemented quality severity contract}
+\label{tab:severity}
+\begin{tabularx}{\textwidth}{L{0.18\textwidth}L{0.29\textwidth}Y}
+\toprule
+Severity & Meaning in this project & Example \\
+\midrule
+Error & A violated condition blocks a trusted pipeline run & Duplicate attempt keys or invalid scores \\
+Warning & An unexpected condition deserves review but may be explainable & Unexpected module or presentation code \\
+Informational & A known condition is profiled and kept visible & Missing deprivation band or pre-course activity \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+An informational profile is not a silent pass. It records a real feature of the
+data whose analytical consequences must be considered.
+
+\section{Source-count checks}
+
+The project records fixed row-count expectations for especially important
+sources:
+
+\begin{lstlisting}[language=SQL,caption={Simplified form of an implemented
+source-count check.}]
+SELECT
+    abs((SELECT count(*) FROM raw.courses) - 22)
+        AS failing_rows,
+    CASE
+        WHEN (SELECT count(*) FROM raw.courses) = 22
+        THEN 'pass'
+        ELSE 'fail'
+    END AS status;
+\end{lstlisting}
+
+The analytical question is: ``Did the imported source match the verified
+archive?'' The input grain is one course row per module-presentation. The
+output grain is one check result. A nonzero difference is an error because the
+database no longer reconciles with the expected archive.
+
+\section{Natural-key checks}
+
+To test the attempt key:
+
+\begin{lstlisting}[language=SQL]
+SELECT count(*) AS duplicate_keys
+FROM (
+    SELECT
+        code_module,
+        code_presentation,
+        id_student
+    FROM staging.student_info
+    GROUP BY 1, 2, 3
+    HAVING count(*) > 1
+) AS duplicated;
+\end{lstlisting}
+
+The inner query returns one row per duplicated key, not one row per duplicated
+source record. The outer count therefore reports duplicated key groups.
+
+\begin{validationbox}
+Always ask what \texttt{failing\_rows} counts. It might count:
+\begin{itemize}
+  \item bad source rows;
+  \item duplicated key groups;
+  \item orphan child rows; or
+  \item the absolute difference from an expected count.
+\end{itemize}
+The detail column should make the unit explicit.
+\end{validationbox}
+
+\section{Relationship checks with anti-joins}
+
+An \term{orphan} is a child row whose required parent is missing. The project
+uses a left anti-join pattern:
+
+\begin{lstlisting}[language=SQL]
+SELECT count(*) AS orphan_submissions
+FROM staging.assessment_submissions AS submission
+LEFT JOIN staging.assessments AS assessment
+  USING (id_assessment)
+WHERE assessment.id_assessment IS NULL;
+\end{lstlisting}
+
+\subsection{Reasoning through the query}
+
+\begin{enumerate}
+  \item The left input is one recorded student-assessment submission.
+  \item The right input is one assessment.
+  \item The join key is \texttt{id\_assessment}.
+  \item A matching assessment supplies a nonnull right-side ID.
+  \item The \texttt{WHERE} clause retains only unmatched submissions.
+  \item The final output is one count.
+\end{enumerate}
+
+The expected count is zero. A nonzero result means a submission references an
+assessment absent from the project source model.
+
+\section{Range and category checks}
+
+\begin{lstlisting}[language=SQL,caption={Implemented validation patterns for
+scores and outcomes.}]
+SELECT count(*) AS invalid_scores
+FROM staging.assessment_submissions
+WHERE score NOT BETWEEN 0 AND 100;
+
+SELECT count(*) AS invalid_results
+FROM staging.student_info
+WHERE final_result NOT IN (
+    'Distinction', 'Pass', 'Fail', 'Withdrawn'
+);
+\end{lstlisting}
+
+\texttt{BETWEEN 0 AND 100} includes both boundaries. \texttt{NOT IN} is useful
+for a documented finite set, but null values need separate reasoning because
+SQL's three-valued logic does not classify null as ``not in'' the set.
+
+\section{Date and temporal checks}
+
+The raw dates are course-relative integers. The project checks that
+unregistration does not precede registration:
+
+\begin{lstlisting}[language=SQL]
+SELECT count(*) AS invalid_registration_order
+FROM staging.student_registration
+WHERE unregistration_day < registration_day;
+\end{lstlisting}
+
+The later snapshot test checks that the latest activity used in a feature is no
+later than the snapshot:
+
+\begin{lstlisting}[language=SQL]
+SELECT count(*) AS future_information
+FROM features.model_snapshots
+WHERE latest_feature_day > snapshot_day;
+\end{lstlisting}
+
+The second query previews the forthcoming leakage-prevention chapter. It is
+shown here because it is part of the real 24-check quality result, not because
+time-aware modeling is fully taught in Edition 0.1.
+
+\section{Known profiles are evidence}
+
+The saved project run reports:
+
+\begin{table}[htbp]
+\centering
+\caption{Selected persisted quality profiles}
+\label{tab:quality-profiles}
+\begin{tabularx}{\textwidth}{L{0.38\textwidth}L{0.18\textwidth}Y}
+\toprule
+Check & Failing/profiled rows & Interpretation \\
+\midrule
+Error-level checks & 0 across 18 checks & The recorded error contracts passed \\
+Activity before course start & 688,988 & Legitimate negative relative days; excluded from model weeks \\
+Missing deprivation band & 1,111 & Missing context remains visible \\
+Missing assessment due dates & 11 & Often exams; excluded from next-assessment targets \\
+Unexpected module codes & 0 & Codes stayed within AAA--GGG \\
+Unexpected presentation codes & 0 & Codes matched documented year/term format \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\verified{The saved SQL quality table contains 24 results: 18 error-level
+checks, three warnings, and three informational profiles. No error-level check
+failed in that run.}
+
+\section{Run the quality gate}
+
+After raw import and the ordered SQL pipeline:
+
+\begin{lstlisting}[language=bash]
+make sql
+make validate
+\end{lstlisting}
+
+\projectfile{scripts/run_quality.sh} reruns source and relational checks. If the
+snapshot table exists, it also runs the four point-in-time checks. It then
+counts failed error-level results and exits with a failure status when the count
+is nonzero.
+
+\begin{validationbox}
+The gate passes only when:
+\begin{enumerate}
+  \item the shell command exits successfully;
+  \item every error-level row has status \texttt{pass};
+  \item warnings and informational profiles have been read;
+  \item the run timestamp is current for the database under study; and
+  \item no expected check silently disappeared.
+\end{enumerate}
+\end{validationbox}
+
+\section{How to investigate a failed check}
+
+Use a consistent procedure:
+\begin{enumerate}
+  \item Identify the check name and what its failing count represents.
+  \item Open the implementing SQL and isolate the detail query.
+  \item Replace the outer count with selected identifying columns.
+  \item Inspect a small bounded sample without editing source data.
+  \item Compare with official documentation and source audit.
+  \item Decide whether the issue is import, source, representation, or rule.
+  \item Document the decision before any cleaning change.
+\end{enumerate}
+
+\begin{editionnote}
+This course does not change project quality rules. If a rule appears incomplete
+or incorrect, record the evidence as a suggested enhancement. Do not silently
+weaken the check to make the pipeline pass.
+\end{editionnote}
+
+\section{Knowledge check}
+
+\begin{enumerate}
+  \item Distinguish profiling, validation, and cleaning.
+  \item What does an anti-join find?
+  \item Why can \texttt{NOT IN} require a separate null check?
+  \item What does zero mean in the duplicate-attempt query?
+  \item Why must warnings be read even when the gate exits successfully?
+  \item What is the first step after a failed quality check?
+\end{enumerate}
+
+\begin{exercisebox}{Exercise 7.1: Write a validation specification}
+For each rule below, write its severity, input grain, failing-row meaning,
+expected result, and investigation query:
+\begin{enumerate}
+  \item assessment weights are between 0 and 100;
+  \item every VLE interaction site exists in the same module-presentation;
+  \item no attempt key is duplicated;
+  \item deprivation band may be missing but must be profiled; and
+  \item unregistration cannot precede registration.
+\end{enumerate}
+\solutionref{sol:validation-spec}
+\end{exercisebox}
+
+\begin{exercisebox}{Exercise 7.2: Debug an orphan count}
+Suppose the orphan-submission check returns 12. Explain how to turn the count
+query into a diagnostic query, which identifiers to display, which source files
+to inspect, and why deleting the 12 rows is not an acceptable first response.
+\solutionref{sol:orphan-debug}
+\end{exercisebox}
+
+\begin{commonmistakes}
+\begin{itemize}
+  \item Treating every nonzero profile as an error.
+  \item Treating a zero count as meaningful without understanding its unit.
+  \item Changing source data before deciding whether the rule or import is
+    wrong.
+  \item Ignoring null behavior in range or membership conditions.
+  \item Reporting an old persisted quality run as evidence for a new database.
+\end{itemize}
+\end{commonmistakes}
+
+\transferheading
+Build validation around contracts that name a grain, rule, severity, failing
+unit, and expected response. Persist results with timestamps. This pattern
+works for event logs, financial ledgers, clinical records, and any other
+multi-table analytical system.
+
+\begin{summarybox}
+Validation turns assumptions into executable, persisted evidence. The project
+checks source counts, natural keys, relationships, ranges, categories, dates,
+and future-information constraints. Error, warning, and informational results
+have different meanings. A successful gate is useful only when the checks,
+failing units, timestamps, and known profiles are understood.
+\end{summarybox}

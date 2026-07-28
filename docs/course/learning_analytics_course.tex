@@ -1,0 +1,125 @@
+\documentclass[11pt,openany]{book}
+
+\usepackage{course-style}
+\graphicspath{{figures/}}
+
+\begin{document}
+
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+  \centering
+  \vspace*{0.9in}
+  {\color{CourseGold}\rule{\textwidth}{1.2pt}\par}
+  \vspace{0.45in}
+  {\Huge\bfseries\color{CourseInk}Learning Analytics with OULAD\par}
+  \vspace{0.2in}
+  {\LARGE\color{CourseRed}Working Through a Real Data Project Together\par}
+  \vspace{0.55in}
+  {\Large Course Edition 0.1\par}
+  \vspace{0.08in}
+  {\large Learning the Data, Database, and SQL Step by Step\par}
+  \vfill
+  {\large A guided walk through the real\\
+  Open University Learning Analytics Dataset project\par}
+  \vspace{0.45in}
+  {\large Jose G. Chavez\par}
+  \vspace{0.12in}
+  {\normalsize July 2026\par}
+  \vspace{0.45in}
+  {\color{CourseGold}\rule{\textwidth}{1.2pt}\par}
+\end{titlepage}
+
+\frontmatter
+\hypersetup{pageanchor=true}
+
+\chapter*{Edition statement}
+\addcontentsline{toc}{chapter}{Edition statement}
+\begin{editionnote}
+I wrote this as a \textbf{first substantial edition}, not as a claim that the
+whole course is finished. In Chapters 1--9, I slow down and teach the
+foundations we actually need. The later chapters stay visible so you can see
+where we are going, but I mark them clearly as forthcoming.
+\end{editionnote}
+
+My goal is to help you understand the existing Learning Analytics project well
+enough to work with it yourself. I will show you the real PostgreSQL, SQL, and
+Python files, but I will not ask you to treat code as self-explanatory. We will
+pause to ask what the data mean, why a step exists, and how we know whether a
+result is trustworthy.
+
+The course does not change the project's database design, analysis code,
+models, source data, saved results, or dashboard. When I report a number, I
+connect it to a saved project result. When I write a new query just for
+teaching, I tell you that it is an example.
+
+\section*{What this edition teaches}
+By the end of Edition 0.1, a learner should be able to:
+\begin{itemize}
+  \item explain the purpose and limits of learning analytics;
+  \item describe every OULAD source table and its observation grain;
+  \item reason about keys, relationships, nulls, and join risks;
+  \item prepare a PostgreSQL 16 environment using the project-supported paths;
+  \item download, verify, and import the official OULAD archive;
+  \item run and interpret source, key, relationship, range, and category checks;
+  \item write introductory PostgreSQL queries against real OULAD tables; and
+  \item validate query outputs instead of accepting plausible-looking results.
+\end{itemize}
+
+\section*{Evidence standard}
+The course uses three labels:
+\begin{description}
+  \item[Verified result] A value present in a saved project output or executable
+    validation result.
+  \item[Instructional query] New documentation-only SQL written to teach a
+    concept using the project's real schema.
+  \item[Conceptual extension] An educational idea that is useful but is not part
+    of the implemented project pipeline.
+\end{description}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\mainmatter
+
+\part{Foundations}
+\input{chapters/01-course-orientation}
+\input{chapters/02-learning-analytics}
+\input{chapters/03-oulad-data}
+\input{chapters/04-relational-foundations}
+
+\part{Build and Check the Database}
+\input{chapters/05-postgresql-setup}
+\input{chapters/06-raw-import}
+\input{chapters/07-data-validation}
+
+\part{Ask Questions with SQL}
+\input{chapters/08-sql-foundations}
+\input{chapters/09-cumulative-lab}
+
+\part{Forthcoming Course Architecture}
+\input{chapters/11-forthcoming}
+
+\appendix
+\part{Reference Material}
+\input{chapters/10-guided-solutions}
+\input{chapters/12-glossary}
+
+\chapter{References}
+\label{ch:references}
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\backmatter
+\chapter*{How this course was built}
+\addcontentsline{toc}{chapter}{How this course was built}
+The editable source for this edition is
+\projectfile{docs/course/learning_analytics_course.tex}. The compiled PDF is
+\projectfile{docs/course/generated/learning_analytics_course.pdf}. Build
+instructions are in \projectfile{docs/course/README.md}.
+
+The course was developed only as new documentation inside
+\projectfile{docs/course/}. Existing analytical implementation and result files
+were read as sources and were not modified.
+
+\end{document}

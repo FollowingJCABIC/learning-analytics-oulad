@@ -14,6 +14,15 @@ COLORS = {
     "gray": "#68717A",
 }
 
+MODEL_LABELS = {
+    "prevalence_baseline": "Event-rate baseline",
+    "sql_rule_baseline": "Simple rules baseline",
+    "logistic_regression": "Logistic regression",
+    "decision_tree": "Decision tree",
+    "gradient_boosted_tree": "Boosted challenger",
+    "calibrated_logistic_regression": "Calibrated logistic model",
+}
+
 
 def _finish(figure: plt.Figure, path: Path) -> None:
     figure.tight_layout()
@@ -132,12 +141,52 @@ def submission_timing(frame: pd.DataFrame, path: Path) -> None:
 
 
 def model_comparison(frame: pd.DataFrame, path: Path) -> None:
-    plot = frame[frame["split"] == "test"].sort_values("pr_auc")
+    plot = frame[frame["split"] == "test"].sort_values("pr_auc").copy()
+    plot["label"] = plot["model"].map(MODEL_LABELS).fillna(
+        plot["model"].str.replace("_", " ")
+    )
     figure, axis = plt.subplots(figsize=(8.4, 4.8))
-    axis.barh(plot["model"].str.replace("_", " "), plot["pr_auc"], color=COLORS["blue"])
+    bars = axis.barh(plot["label"], plot["pr_auc"], color=COLORS["blue"])
+    for bar, model in zip(bars, plot["model"], strict=True):
+        if "baseline" in model:
+            bar.set_facecolor("white")
+            bar.set_edgecolor(COLORS["gray"])
+            bar.set_hatch("///")
+    axis.bar_label(bars, fmt="%.3f", padding=5, color=COLORS["gray"])
     axis.set_xlim(0, 1)
-    axis.set_title("Held-out 2014J model comparison", loc="left")
-    axis.set_xlabel("Precision-recall AUC")
+    axis.set_title("How well each approach ranked the next-assessment cases", loc="left")
+    axis.set_xlabel("Precision-recall AUC (higher is better)")
+    axis.set_ylabel("")
+    axis.grid(axis="x", alpha=0.2)
+    _finish(figure, path)
+
+
+def model_overview(frame: pd.DataFrame, path: Path) -> None:
+    selected = {
+        "prevalence_baseline",
+        "calibrated_logistic_regression",
+        "gradient_boosted_tree",
+    }
+    plot = frame[
+        (frame["split"] == "test") & frame["model"].isin(selected)
+    ].sort_values("pr_auc").copy()
+    plot["label"] = plot["model"].map(MODEL_LABELS)
+    colors = [
+        COLORS["gray"] if model == "prevalence_baseline"
+        else COLORS["green"] if model == "calibrated_logistic_regression"
+        else COLORS["blue"]
+        for model in plot["model"]
+    ]
+
+    figure, axis = plt.subplots(figsize=(8.4, 4.6))
+    bars = axis.barh(plot["label"], plot["pr_auc"], color=colors)
+    bars[0].set_facecolor("white")
+    bars[0].set_edgecolor(COLORS["gray"])
+    bars[0].set_hatch("///")
+    axis.bar_label(bars, fmt="%.3f", padding=5, color=COLORS["gray"])
+    axis.set_xlim(0, 0.75)
+    axis.set_title("The boosted model ranked cases best", loc="left")
+    axis.set_xlabel("Precision-recall AUC (higher is better)")
     axis.set_ylabel("")
     axis.grid(axis="x", alpha=0.2)
     _finish(figure, path)

@@ -11,6 +11,7 @@ from learning_analytics.plotting import (
     calibration_curve,
     engagement_consistency,
     model_comparison,
+    model_overview,
     outcome_distribution,
     performance_by_week,
     submission_timing,
@@ -120,6 +121,7 @@ def build_model_plots(settings: Settings) -> None:
     tables = settings.reports_dir / "tables"
     figures = settings.reports_dir / "figures"
     model_comparison(pd.read_csv(tables / "model_metrics.csv"), figures / "model_comparison.png")
+    model_overview(pd.read_csv(tables / "model_metrics.csv"), figures / "model_overview.png")
     calibration_curve(pd.read_csv(tables / "calibration_bins.csv"), figures / "calibration.png")
     threshold_curve(pd.read_csv(tables / "threshold_analysis.csv"), figures / "threshold_curve.png")
     performance_by_week(

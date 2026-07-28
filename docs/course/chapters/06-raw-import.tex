@@ -1,0 +1,295 @@
+\chapter{Downloading, Auditing, and Importing Raw OULAD Data}
+\label{ch:raw-import}
+
+\begin{learningobjectives}
+After completing this chapter, you will be able to:
+\begin{itemize}
+  \item explain the official archive, checksum, and expected-file contract;
+  \item locate the extracted CSV files without committing raw data;
+  \item explain why most raw columns initially land as text;
+  \item trace the exact table creation and client-side bulk-load order;
+  \item interpret import failure behavior and expected row counts; and
+  \item reconcile the populated raw schema with saved source-audit evidence.
+\end{itemize}
+\end{learningobjectives}
+
+\section{The raw-data contract}
+
+The source data are downloaded on demand. They are not tracked in Git. The
+expected local paths are:
+
+\begin{lstlisting}
+data/raw/oulad.zip
+data/raw/source/assessments.csv
+data/raw/source/courses.csv
+data/raw/source/studentAssessment.csv
+data/raw/source/studentInfo.csv
+data/raw/source/studentRegistration.csv
+data/raw/source/studentVle.csv
+data/raw/source/vle.csv
+data/raw/source/OULAD.names
+\end{lstlisting}
+
+The downloader in \projectfile{src/learning_analytics/download.py} verifies an
+expected SHA-256 checksum and confirms that all eight archive members exist
+before extraction.
+
+\begin{projectconnection}
+The exact archive checksum used by the implementation is stored as a constant
+in \projectfile{src/learning_analytics/download.py}. The source auditor then calculates a checksum for
+each extracted CSV and saves it in
+\projectfile{reports/tables/source_file_profile.csv}.
+\end{projectconnection}
+
+\section{Download and source audit}
+
+With the Python environment active:
+
+\begin{lstlisting}[language=bash]
+make data
+\end{lstlisting}
+
+This target runs two package commands:
+\begin{enumerate}
+  \item \texttt{python -m learning\_analytics download};
+  \item \texttt{python -m learning\_analytics audit}.
+\end{enumerate}
+
+The source audit reads the large CSVs without loading every file into one
+DataFrame. Its streaming profiler counts rows, records \texttt{?} or empty
+cells, and calculates per-file checksums. Selected smaller files are then read
+with pandas to calculate unique students, attempt keys, module counts, and
+observed anomalies.
+
+\begin{validationbox}
+After \texttt{make data}, require:
+\begin{lstlisting}[language=bash]
+test -f data/raw/source/studentVle.csv
+test -f reports/source-audit.json
+test -f reports/tables/source_file_profile.csv
+\end{lstlisting}
+Then compare the profile with \cref{tab:source-files}. Do not proceed if file
+names, checksums, or counts differ unexpectedly.
+\end{validationbox}
+
+\section{Why raw tables preserve source shape}
+
+The raw schema is a landing zone. In
+\projectfile{sql/01_raw_tables.sql}, most columns are declared as
+\texttt{text}. This design has three advantages:
+
+\begin{enumerate}
+  \item values such as \texttt{?} can load before null conversion;
+  \item source contents remain available for reconciliation; and
+  \item type errors are handled visibly in the staging layer.
+\end{enumerate}
+
+The largest table, \texttt{raw.student\_vle}, uses integer columns already and
+is declared \texttt{UNLOGGED} for load and analytical performance. Unlogged
+tables reduce write-ahead logging but are not designed for durable source
+storage across server crashes. The official CSV remains the reproducible
+source.
+
+\begin{lstlisting}[language=SQL,caption={Selected raw landing definitions from
+\texttt{sql/01\_raw\_tables.sql}.}]
+CREATE TABLE raw.assessments (
+    code_module text,
+    code_presentation text,
+    id_assessment text,
+    assessment_type text,
+    date text,
+    weight text
+);
+
+CREATE UNLOGGED TABLE raw.student_vle (
+    code_module text,
+    code_presentation text,
+    id_student integer,
+    id_site integer,
+    date integer,
+    sum_click integer
+);
+\end{lstlisting}
+
+\section{Import order}
+
+Run:
+
+\begin{lstlisting}[language=bash]
+make ingest
+\end{lstlisting}
+
+The target delegates to \projectfile{scripts/load_raw.sh}. The script:
+\begin{enumerate}
+  \item creates the six schemas;
+  \item drops and recreates the seven raw tables;
+  \item loads each CSV with PostgreSQL \texttt{\textbackslash copy};
+  \item creates two supporting raw indexes; and
+  \item runs \texttt{ANALYZE} on the largest raw relations.
+\end{enumerate}
+
+\subsection{Why \texttt{\textbackslash copy} is used}
+
+\texttt{\textbackslash copy} is a \texttt{psql} client command. It reads a file
+visible to the client process. Server-side \texttt{COPY} reads a path visible
+to the PostgreSQL server and may require different permissions. Because the
+script runs from the project machine and constructs absolute project paths,
+client-side loading is appropriate.
+
+\begin{lstlisting}[language=SQL,caption={The project bulk-load pattern.}]
+\copy raw.courses
+FROM '/absolute/project/path/data/raw/source/courses.csv'
+WITH (FORMAT csv, HEADER true)
+\end{lstlisting}
+
+The course shows a descriptive absolute path above, but the implementation
+calculates the real path at runtime. Do not hard-code a personal home directory
+in the project or course source.
+
+\section{Failure behavior}
+
+The shell script begins with:
+
+\begin{lstlisting}[language=bash]
+set -euo pipefail
+\end{lstlisting}
+
+Every \texttt{psql} call uses:
+
+\begin{lstlisting}[language=bash]
+-v ON_ERROR_STOP=1
+\end{lstlisting}
+
+Together, these settings stop the load when a command fails rather than
+continuing into an apparently complete database.
+
+\begin{editionnote}
+\textbf{Suggested enhancement, not implemented:} the project does not provide a
+rejected-row quarantine table. A malformed CSV row stops the bulk load.
+Edition 0.1 teaches how to inspect the error and source file; a future
+production-oriented module could add staged quarantine handling.
+\end{editionnote}
+
+\section{Validate the imported row counts}
+
+\begin{lstlisting}[language=SQL,caption={Instructional row-count reconciliation
+query based on the implemented gallery.}]
+SELECT 'courses' AS source_table, count(*) AS rows
+FROM raw.courses
+UNION ALL
+SELECT 'assessments', count(*) FROM raw.assessments
+UNION ALL
+SELECT 'vle', count(*) FROM raw.vle
+UNION ALL
+SELECT 'student_info', count(*) FROM raw.student_info
+UNION ALL
+SELECT 'student_registration', count(*)
+FROM raw.student_registration
+UNION ALL
+SELECT 'student_assessment', count(*)
+FROM raw.student_assessment
+UNION ALL
+SELECT 'student_vle', count(*) FROM raw.student_vle
+ORDER BY source_table;
+\end{lstlisting}
+
+The output grain is one row per source table. The sum should be 10,900,970.
+The expected individual counts are listed in \cref{tab:source-files}.
+
+\begin{validationbox}
+A correct import requires more than ``seven tables exist.'' Check:
+\begin{enumerate}
+  \item all expected tables exist;
+  \item each row count matches the source audit;
+  \item no source file was loaded into the wrong table;
+  \item the source profile and database counts reconcile; and
+  \item the next staging step can cast expected values.
+\end{enumerate}
+\end{validationbox}
+
+\section{From raw text to staging types}
+
+The next pipeline stage creates typed views. For example:
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    trim(code_module) AS code_module,
+    id_assessment::integer AS id_assessment,
+    NULLIF(date, '?')::integer AS due_day,
+    weight::numeric(6, 2) AS weight
+FROM raw.assessments;
+\end{lstlisting}
+
+Read the expressions from inside out:
+\begin{enumerate}
+  \item \texttt{NULLIF(date, '?')} converts the missing marker to SQL null;
+  \item \texttt{::integer} casts remaining values to integers;
+  \item aliases replace source names with analytical names; and
+  \item \texttt{numeric(6,2)} preserves assessment weights with decimal scale.
+\end{enumerate}
+
+If an unexpected nonnumeric value appears, the cast fails. That is useful:
+the source contract has changed or the input is wrong.
+
+\section{Knowledge check}
+
+\begin{enumerate}
+  \item What does the archive checksum verify?
+  \item Why are most raw columns text?
+  \item What is the difference between \texttt{COPY} and
+    \texttt{\textbackslash copy}?
+  \item What does \texttt{ON\_ERROR\_STOP} protect against?
+  \item Why is table existence insufficient import validation?
+  \item What tradeoff comes with an unlogged table?
+\end{enumerate}
+
+\begin{exercisebox}{Exercise 6.1: Reconcile one imported table}
+Choose \texttt{studentAssessment.csv}. Produce a short reconciliation containing:
+\begin{enumerate}
+  \item source path;
+  \item source-profile row and column counts;
+  \item raw database row count;
+  \item raw column names;
+  \item candidate key;
+  \item known missing marker rule; and
+  \item one query that would reveal duplicate candidate keys.
+\end{enumerate}
+\solutionref{sol:reconcile}
+\end{exercisebox}
+
+\begin{exercisebox}{Exercise 6.2: Explain a failed cast}
+Suppose one \texttt{assessments.date} value is the text \texttt{TBD}. Explain:
+\begin{enumerate}
+  \item why the raw load can succeed;
+  \item why the staging cast fails;
+  \item how to locate the source row;
+  \item why silently converting every invalid value to null is risky; and
+  \item what evidence should be recorded before deciding on a rule.
+\end{enumerate}
+\solutionref{sol:failed-cast}
+\end{exercisebox}
+
+\begin{commonmistakes}
+\begin{itemize}
+  \item Running import before download and extraction.
+  \item Loading the same CSV twice without recreating raw tables.
+  \item Confusing \texttt{studentInfo} attempts with unique students.
+  \item Treating a successful bulk load as proof of correct column mapping.
+  \item Hard-coding a personal absolute path in SQL.
+  \item Changing a source value to make a cast pass without documenting the
+    evidence.
+\end{itemize}
+\end{commonmistakes}
+
+\transferheading
+The same raw-import pattern works for many datasets: verify the acquired file,
+preserve a source-faithful landing layer, stop on structural failures, cast in
+a visible staging layer, and reconcile row counts before analysis.
+
+\begin{summarybox}
+The project downloads and checksum-verifies the official OULAD archive, profiles
+the extracted sources, creates source-faithful raw tables, and bulk-loads seven
+CSV files with fail-fast client-side commands. Correctness requires
+reconciliation of files, columns, rows, types, and missing markers, not merely a
+successful command.
+\end{summarybox}

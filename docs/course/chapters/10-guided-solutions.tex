@@ -1,0 +1,343 @@
+\chapter{Guided Solutions}
+\label{ch:guided-solutions}
+
+\begin{plainlanguage}
+These solutions model reasoning, not merely final answers. Try each exercise
+before reading its response. More than one wording or query can be correct when
+its grain, assumptions, and validation are explicit.
+\end{plainlanguage}
+
+\section{Course orientation}
+
+\subsection{Solution to the orientation exercise}
+\label{sol:orientation}
+
+A defensible workflow begins with the question and source documentation because
+those establish what a row can mean. It then audits the source files, imports
+them into a raw layer without silent reinterpretation, and converts them into
+typed staging and core relations. Quality checks test row counts, keys,
+relationships, ranges, and missingness before analysis. SQL results are
+reconciled against known totals and described at their actual grain. Only then
+should a finding be communicated, together with its limits. This sequence is
+transferable because it relies on evidence and relational structure rather than
+on OULAD-specific commands.
+
+\section{Learning analytics and the problem}
+
+\subsection{Solution to the classification check}
+\label{sol:learning-analytics}
+
+``Withdrawn attempts account for 31.2\% of recorded attempts'' is descriptive.
+``Students with low activity are more likely to withdraw'' is predictive or
+associational unless a causal design is supplied. ``Sending a message reduces
+withdrawal'' is causal and requires a comparison strategy that addresses what
+would have happened without the message. The important move is to classify the
+claim before choosing methods.
+
+\subsection{Solution to the question-design exercise}
+\label{sol:learning-question}
+
+One bounded question is: ``Among recorded student--module presentation
+attempts, how does the distribution of final results vary by module and
+presentation?'' The unit is one attempt. The population is the attempts present
+in OULAD, not all distance-learning students. The outcome is
+\texttt{final\_result}. A later analysis must consider whether presentations
+differ in composition and timing. This question supports description; it does
+not identify why outcomes differ.
+
+\section{The OULAD data}
+
+\subsection{Solution to the source-grain map}
+\label{sol:source-grains}
+
+\small
+\begin{longtable}{@{}p{0.23\textwidth}p{0.42\textwidth}p{0.28\textwidth}@{}}
+\caption{Suggested grains and candidate keys}\label{tab:solution-grains}\\
+\toprule
+Source & One row represents & Candidate key \\
+\midrule
+\endfirsthead
+\toprule
+Source & One row represents & Candidate key \\
+\midrule
+\endhead
+\projectfile{courses.csv} &
+One module presentation &
+\texttt{module + presentation} \\
+\projectfile{assessments.csv} &
+One assessment attached to a module presentation &
+\texttt{assessment\_id} \\
+\projectfile{vle.csv} &
+One VLE activity type within a module presentation &
+\texttt{site\_id + module + presentation} \\
+\projectfile{studentInfo.csv} &
+One student--module presentation attempt &
+\texttt{student\_id + module + presentation} \\
+\projectfile{studentRegistration.csv} &
+One registration record for an attempt &
+\texttt{student\_id + module + presentation} \\
+\projectfile{studentAssessment.csv} &
+One student's submission record for one assessment &
+\texttt{assessment\_id + student\_id} \\
+\projectfile{studentVle.csv} &
+One student's summarized interaction with one VLE site on one relative day &
+\texttt{site\_id + student\_id + module + presentation + date} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+These are analytical candidate keys and should be tested, not trusted merely
+because they sound plausible.
+
+\subsection{Solution to the attempt trace}
+\label{sol:attempt-trace}
+
+Begin with one attempt in \projectfile{studentInfo.csv}. Match its registration
+record using student, module, and presentation. Find the presentation's
+assessments, then connect the student's submissions through
+\texttt{assessment\_id} and \texttt{student\_id}. Separately, match VLE activity
+through student, module, and presentation, with site and relative day adding
+detail. Keep assessment and VLE facts in separate aggregates until each has
+been reduced to attempt grain. Joining both detailed tables directly can
+multiply rows.
+
+\section{Relational foundations}
+
+\subsection{Solution to the dangerous join}
+\label{sol:dangerous-join}
+
+Suppose an attempt has four assessment submissions and 300 daily-site activity
+rows. A direct join between both detail tables can produce 1,200 rows for that
+attempt. Summing clicks after that join would repeat each activity row four
+times. The repair is to aggregate assessments to one row per attempt, aggregate
+activity to one row per attempt, validate both intermediate keys, and only then
+join the two attempt-level relations.
+
+\subsection{Solution to the database-rules exercise}
+\label{sol:database-rules}
+
+A useful rule set includes:
+\begin{itemize}
+  \item a primary or unique key at the declared grain;
+  \item foreign-key checks where the project intentionally enforces them;
+  \item nonnegative click counts;
+  \item accepted final-result values;
+  \item explicit nullability for fields such as assessment due date; and
+  \item row-count and orphan checks after every material transformation.
+\end{itemize}
+Database constraints prevent some invalid states. Quality queries remain
+necessary for conditions that are contextual, cross-table, or deliberately
+profiled instead of rejected.
+
+\section{PostgreSQL setup}
+
+\subsection{Solution to the environment exercise}
+\label{sol:environment}
+
+The environment record should identify Docker or local PostgreSQL, show the
+client and server versions, name the database, and include a successful
+\texttt{current\_database()} query. For Docker, the Compose configuration is
+the authority for service, role, password, and database values. For a trusted
+local installation, \texttt{postgresql:///learning\_analytics} can use the
+current operating-system user. The repository's default URL names a
+\texttt{learning\_analytics} role, while the local database target may create
+only the database. That distinction should be diagnosed, not papered over.
+
+\section{Raw import}
+
+\subsection{Solution to the reconciliation exercise}
+\label{sol:reconcile}
+
+Create a three-column comparison for audited CSV, raw table, and typed core
+relation. For the source used in this project, all seven CSV counts should be
+accounted for. A mismatch is a stop condition until explained. First preserve
+the import log. Then confirm that the audited file and delimiter are the ones
+actually loaded. Finally, rerun only the smallest failing stage with
+stop-on-error enabled and inspect rejected or malformed records. Never adjust a
+target count simply to match an incomplete load.
+
+\subsection{Solution to the failed-cast exercise}
+\label{sol:failed-cast}
+
+Keep the raw text row unchanged. Query the candidate column with a narrow
+pattern or conversion guard to identify values that cannot be cast. Compare
+them with the data dictionary and neighboring records. Then decide whether the
+value represents a documented missing marker, a source anomaly, or a parsing
+error. Implement the rule in staging, add a quality test, and rerun from a
+reproducible boundary. Editing the raw table would destroy evidence of the
+source condition.
+
+\section{Data validation}
+
+\subsection{Solution to the validation specification}
+\label{sol:validation-spec}
+
+For \texttt{student\_vle}, a compact specification includes:
+\begin{itemize}
+  \item row count reconciles to the audited source;
+  \item the declared composite key is unique;
+  \item every module-presentation pair exists in courses;
+  \item every site belongs to the corresponding VLE presentation;
+  \item every student attempt exists at attempt grain;
+  \item \texttt{sum\_click} is nonnegative; and
+  \item activity-day range and pre-start activity are profiled.
+\end{itemize}
+Pre-start records are a warning profile because they may be legitimate access,
+not automatically invalid rows.
+
+\subsection{Solution to the orphan-debugging exercise}
+\label{sol:orphan-debug}
+
+Start with an anti-join that returns the orphaned child keys and a small sample,
+not only a count. Confirm that the join uses the full composite relationship;
+omitting presentation is a common mistake. Compare data types and whitespace
+normalization. Then inspect whether the parent source lacks the key or whether
+staging transformed it incorrectly. Fix the earliest reproducible cause and
+retain the anti-join as a regression test.
+
+\section{Introductory SQL}
+
+\subsection{Solution to the inspection exercise}
+\label{sol:sql-inspection}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    student_id,
+    module,
+    presentation,
+    final_result
+FROM core.student_info
+WHERE final_result IN ('Fail', 'Withdrawn')
+ORDER BY module, presentation, student_id
+LIMIT 25;
+\end{lstlisting}
+
+This is an inspection query. The limit makes the display manageable but does
+not define the analytical population.
+
+\subsection{Solution to the outcome exercise}
+\label{sol:sql-outcomes}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    module,
+    final_result,
+    COUNT(*) AS attempts
+FROM core.student_info
+GROUP BY module, final_result
+HAVING COUNT(*) >= 100
+ORDER BY module, attempts DESC;
+\end{lstlisting}
+
+The result is at module-by-outcome grain. The \texttt{HAVING} clause filters
+groups after aggregation; a \texttt{WHERE COUNT(*)} expression would be
+invalid.
+
+\subsection{Solution to the missingness exercise}
+\label{sol:sql-missing}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    COUNT(*) AS attempts,
+    COUNT(imd_band) AS recorded_imd_band,
+    COUNT(*) FILTER (WHERE imd_band IS NULL) AS missing_imd_band,
+    ROUND(
+        100.0 * COUNT(*) FILTER (WHERE imd_band IS NULL) / COUNT(*),
+        1
+    ) AS missing_pct
+FROM core.student_info;
+\end{lstlisting}
+
+\texttt{COUNT(imd\_band)} ignores null values, while \texttt{COUNT(*)} counts
+rows. The expected missing count is 1,111 attempt records.
+
+\subsection{Solution to the repeat-appearance exercise}
+\label{sol:sql-repeats}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    student_id,
+    COUNT(*) AS attempt_count,
+    COUNT(DISTINCT module) AS module_count
+FROM core.student_info
+GROUP BY student_id
+HAVING COUNT(*) > 1
+ORDER BY attempt_count DESC, student_id
+LIMIT 25;
+\end{lstlisting}
+
+This query identifies people with multiple attempt rows. It does not by itself
+tell whether the rows are retries, different modules, or another pattern; that
+requires examining module and presentation.
+
+\section{Cumulative lab}
+
+\subsection{Solution to lab checkpoint 1}
+\label{sol:lab-grain}
+
+\texttt{COUNT(*)} counts the 32,593 rows in the attempt-level relation, so its
+unit is attempts. \texttt{COUNT(DISTINCT student\_id)} counts the 28,785 unique
+student identifiers represented by those rows. The attempt count is larger
+because some students appear in more than one module presentation. Neither
+measure is ``more correct'' without a question that names its unit.
+
+\subsection{Solution to lab checkpoint 2}
+\label{sol:lab-environment}
+
+For the Docker path, confirm the Compose service is running and use the role,
+password, port, and database declared there. Recreating the service from the
+project configuration may be appropriate when no persistent work would be
+lost. For a trusted local path, use the current local role with
+\texttt{postgresql:///learning\_analytics}, or deliberately create and grant
+the named role. Import scripts cannot fix the error because authentication
+happens before SQL or CSV loading begins.
+
+\subsection{Solution to lab checkpoint 3}
+\label{sol:lab-reconcile}
+
+First save the failed command, full log, audited file checksum, and observed
+counts. Second, use a clean raw table and rerun the single
+\texttt{studentAssessment.csv} load with stop-on-error behavior, watching for
+delimiter, quoting, encoding, or newline errors. Third, compare the final file
+record with the loaded tail and verify that the source audit counted data rows
+the same way as PostgreSQL. Repair the loader or source acquisition step; do
+not invent the missing row.
+
+\subsection{Solution to lab checkpoint 4}
+\label{sol:lab-quality}
+
+One acceptable note is:
+\begin{quote}
+All 18 error-level tests passed, so the current build clears the project's
+blocking quality gate. The suite also profiles 688,988 VLE activity rows before
+presentation day zero; these are retained, but later feature windows must state
+whether they include them. Eleven assessments have no due date, so deadline-
+relative features need a missingness rule. IMD band is missing for 1,111
+attempts, so demographic summaries must report their denominator and missing
+category. These warnings document consequential source conditions rather than
+failed integrity tests.
+\end{quote}
+
+\subsection{Solution to lab checkpoint 5}
+\label{sol:lab-synthesis}
+
+\begin{quote}
+The data contain 32,593 student--module presentation attempts contributed by
+28,785 distinct students, so several students appear more than once. Pass is
+the most common recorded result (12,361 attempts), while 10,156 attempts
+(31.2\%) are recorded as Withdrawn. These values describe attempts, not unique
+people, and should not be interpreted as causal explanations of learning
+outcomes. The blocking quality checks pass, but 688,988 activity rows occur
+before presentation day zero; any later engagement window must decide and
+document whether those rows are included. Assessment due-date and IMD-band
+missingness also constrain deadline-based or demographic comparisons. A useful
+next question is whether the outcome distribution differs across module
+presentations after first checking that each comparison uses consistent
+attempt-level denominators.
+\end{quote}
+
+\section{How to use these solutions}
+
+Compare the structure of your reasoning with the examples. A strong response
+usually names the unit, the population, the operation, the check, and the
+limit. Rewording is encouraged; unexamined copying is not.

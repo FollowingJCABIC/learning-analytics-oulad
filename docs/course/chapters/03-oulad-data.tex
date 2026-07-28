@@ -1,0 +1,327 @@
+\chapter{The OULAD Source Tables and What Each Row Means}
+\label{ch:oulad-data}
+
+\begin{learningobjectives}
+After completing this chapter, you will be able to:
+\begin{itemize}
+  \item identify the seven CSV tables used by the project;
+  \item define module, presentation, student attempt, assessment, resource, and
+    interaction in the OULAD context;
+  \item state what one row means (its observation grain) and which columns
+    should identify it (its candidate key) for each source table;
+  \item trace important relationships among the tables;
+  \item interpret relative-day fields and the question-mark missing marker; and
+  \item identify limitations that must remain visible during analysis.
+\end{itemize}
+\end{learningobjectives}
+
+\section{Read one CSV row before reading seven tables}
+
+A CSV file is a text file that represents a table. Consider this simplified
+excerpt from \projectfile{courses.csv}:
+
+\begin{lstlisting}[caption={A header and one illustrative CSV data row}]
+code_module,code_presentation,module_presentation_length
+AAA,2013J,268
+\end{lstlisting}
+
+\begin{description}
+  \item[Header] The first line names the columns. It describes what each
+    position means.
+  \item[Row] The second line is one data record. Here it describes one delivery
+    of module AAA.
+  \item[Column] Values in the same comma-separated position belong to the same
+    variable. The third column records presentation length.
+  \item[Cell or field] One value at the intersection of a row and column, such
+    as \texttt{268}.
+  \item[Identifier or ID] A value used to name or match a recorded entity. AAA
+    identifies a module, but it is not a person's identity.
+\end{description}
+
+The row means that module AAA was delivered in presentation \texttt{2013J} and that the
+recorded presentation length is 268 days. Reading a table starts with that
+sentence, not with calculation.
+
+\begin{validationbox}
+Point to each part of the sample and answer: Which line is the header? What does
+the one data row represent? Which value records presentation? Which value is a
+measurement rather than an identifier?
+\end{validationbox}
+
+\section{Where the data came from: provenance}
+
+\term{Provenance} means the recorded history of where data came from and how it
+reached the project. Provenance matters because two files with the same name
+can contain different bytes or versions.
+
+OULAD was created from anonymized Open University records and released through
+the UCI Machine Learning Repository \citep{oulad_dataset,oulad_paper}. The
+project downloads the official archive rather than committing the source data.
+An \term{archive} is one packaged file containing other files, commonly a ZIP
+file. \term{Anonymized} means direct identities have been removed or replaced;
+it does not mean the records have no privacy risk. The Creative Commons
+Attribution 4.0 license states the conditions under which the dataset can be
+reused.
+
+The implemented downloader checks:
+\begin{itemize}
+  \item the archive's SHA-256 checksum;
+  \item the presence of all seven CSV files and \texttt{OULAD.names}; and
+  \item the exact expected archive before extraction, which means unpacking the
+    files it contains.
+\end{itemize}
+
+\begin{plainlanguage}
+A checksum is a fingerprint of a file. If the downloaded bytes change, the
+fingerprint changes. Matching the expected checksum does not prove that every
+value is correct, but it does show that the project received the exact archive
+it was designed to process.
+\end{plainlanguage}
+
+\section{OULAD vocabulary}
+
+\begin{description}
+  \item[Module] An anonymized course code, represented as AAA through GGG.
+  \item[Presentation] One delivery of a module in a period such as 2013J or
+    2014B. The code combines a year with a start term.
+  \item[Student-module-presentation attempt] One student identifier associated
+    with one module and one presentation. A student can appear in more than one
+    attempt.
+  \item[Assessment] A TMA, CMA, or Exam defined for a module-presentation.
+  \item[VLE resource] An online site or activity made available in a
+    module-presentation.
+  \item[VLE interaction] A recorded number of clicks by a student on a site on a
+    course-relative day.
+\end{description}
+
+\section{The seven source files}
+
+\small
+\begin{longtable}{L{0.19\textwidth}L{0.13\textwidth}L{0.26\textwidth}L{0.31\textwidth}}
+\caption{Verified OULAD source files used by the project}\label{tab:source-files}\\
+\toprule
+Source file & Rows & Observation grain & Important identifiers and purpose \\
+\midrule
+\endfirsthead
+\toprule
+Source file & Rows & Observation grain & Important identifiers and purpose \\
+\midrule
+\endhead
+{\scriptsize\projectfile{courses.csv}} & 22 & One module-presentation & Module, presentation, presentation length \\
+{\scriptsize\projectfile{assessments.csv}} & 206 & One assessment & Assessment ID plus owning module-presentation \\
+{\scriptsize\projectfile{vle.csv}} & 6,364 & One site in a module-presentation & Site ID, activity type, availability weeks \\
+{\scriptsize\projectfile{studentInfo.csv}} & 32,593 & One student-module-presentation attempt & Attempt context, demographics, final result \\
+{\shortstack[l]{\scriptsize\texttt{student}\\[-1pt]\scriptsize\texttt{Registration.csv}}} & 32,593 & One student-module-presentation registration & Registration and unregistration relative days \\
+{\scriptsize\projectfile{studentAssessment.csv}} & 173,912 & One recorded student-assessment submission & Assessment, student, submitted day, banked flag, score \\
+{\scriptsize\projectfile{studentVle.csv}} & 10,655,280 & One student-site-relative-day interaction row & Module-presentation, student, site, day, click count \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+\verified{The seven CSV files contain 10,900,970 rows in total. These counts
+come from \projectfile{reports/tables/source_file_profile.csv}.}
+
+\section{A relational map}
+
+The seven files are \term{related}: a value in one table can be matched with a
+corresponding value in another. For example, an assessment record names the
+module and presentation that own it. The arrows in
+\cref{fig:source-erd} mean ``can be connected through matching identifiers.''
+They do not mean that every possible connection is automatically correct.
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tikzpicture}[
+  entity/.style={
+    rectangle,
+    draw=CourseBlue,
+    fill=CourseLight,
+    rounded corners=1mm,
+    minimum width=34mm,
+    minimum height=12mm,
+    align=center,
+    font=\small
+  },
+  link/.style={-{Latex[length=2mm]},thick,color=CourseGold}
+]
+\node[entity] (courses) {courses\\module-presentation};
+\node[entity,right=20mm of courses] (assessments) {assessments\\assessment};
+\node[entity,right=20mm of assessments] (submissions) {studentAssessment\\student-assessment};
+\node[entity,below=20mm of courses] (info) {studentInfo\\student attempt};
+\node[entity,right=20mm of info] (registration) {studentRegistration\\registration};
+\node[entity,below=20mm of info] (studentvle) {studentVle\\interaction row};
+\node[entity,right=20mm of studentvle] (vle) {vle\\presentation-site};
+
+\draw[link] (courses) -- node[above,font=\scriptsize]{defines} (assessments);
+\draw[link] (assessments) -- node[above,font=\scriptsize]{receives} (submissions);
+\draw[link] (courses) -- node[left,font=\scriptsize]{contains} (info);
+\draw[link] (info) -- node[above,font=\scriptsize]{matches} (registration);
+\draw[link] (info) -- node[left,font=\scriptsize]{produces} (studentvle);
+\draw[link] (vle) -- node[above,font=\scriptsize]{describes site} (studentvle);
+\draw[link] (courses) -- node[right,font=\scriptsize]{publishes} (vle);
+\end{tikzpicture}
+}
+\caption{Conceptual relationships among the seven source tables. Arrows show
+how identifiers can connect tables. The original CSV files do not enforce
+these matches as database rules.}
+\label{fig:source-erd}
+\end{figure}
+
+\section{Grain before keys}
+
+\term{Observation grain} answers: ``What does one row represent?'' A
+\term{candidate key} answers: ``Which columns should uniquely identify that
+row?'' A candidate key is a proposed identifier until the data is tested for
+duplicates. The grain comes first. Without it, a key is merely a list of
+columns.
+
+Return to the sample row \texttt{AAA,2013J,268}. Its grain is one module
+presentation. Module alone cannot identify the row because module AAA can be
+delivered more than once. Module plus presentation is the candidate key.
+
+\begin{table}[htbp]
+\centering
+\caption{Source-grain reasoning}
+\label{tab:source-grains}
+\begin{tabularx}{\textwidth}{L{0.25\textwidth}L{0.34\textwidth}Y}
+\toprule
+Source & Candidate identifying columns & Important caution \\
+\midrule
+\texttt{courses} & module + presentation & Module alone is not unique \\
+\texttt{studentInfo} & module + presentation + student & Student alone is not an attempt key \\
+\texttt{studentRegistration} & module + presentation + student & Must be checked against attempts \\
+\texttt{assessments} & assessment ID & Module context is carried on the assessment \\
+\texttt{studentAssessment} & assessment ID + student & An absent row means no recorded submission \\
+\texttt{vle} & site + module + presentation & Site context belongs to a presentation \\
+\texttt{studentVle} & student + site + module + presentation + day, approximately & Duplicate source-grain rows can occur; the core table deliberately has no declared primary key \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{validationbox}
+For every table, say the following sentence aloud:
+
+\begin{quote}
+``One row represents \underline{\hspace{4cm}}, and it should be identified by
+\underline{\hspace{4cm}}.''
+\end{quote}
+
+If you cannot fill both blanks precisely, do not join the table to another one
+or aggregate it into summaries yet.
+\end{validationbox}
+
+\section{Time is relative}
+
+OULAD uses days relative to the start of a presentation rather than calendar
+dates. Important fields include:
+\begin{itemize}
+  \item \texttt{date\_registration}: registration day relative to course start;
+  \item \texttt{date\_unregistration}: recorded unregistration day;
+  \item \texttt{assessments.date}: expected assessment due day;
+  \item \texttt{date\_submitted}: recorded submission day; and
+  \item \texttt{studentVle.date}: interaction day.
+\end{itemize}
+
+Negative days are meaningful. The saved quality profile finds 688,988 VLE
+activity rows before day zero. Those rows are not automatically errors: they
+can represent legitimate pre-course access.
+
+\section{Missing values and absent rows}
+
+Two different forms of missingness matter:
+
+\begin{enumerate}
+  \item A source cell can contain the marker \texttt{?}. The staging layer
+    converts it to SQL \texttt{NULL}. NULL is PostgreSQL's marker for a missing
+    or unknown value; it is not the number zero or an empty string.
+  \item A whole expected row can be absent. For example, a student-assessment
+    pair with no matching submission row represents a missing recorded
+    submission in a later analysis table.
+\end{enumerate}
+
+These cases must not be handled identically. A missing deprivation-band value
+is an unknown attribute. A missing submission row is an event defined through
+the relationship between attempts, assessments, and recorded submissions.
+
+\verified{The saved audit contains 1,111 missing deprivation-band values and 11
+assessments without due dates. The missing due dates are commonly associated
+with exams, so those assessments are not treated as an eligible ``next
+assessment'' when the later project defines a prediction outcome.}
+
+\section{Representational limitations}
+
+\begin{itemize}
+  \item Module codes are anonymized, which limits subject-specific
+    interpretation.
+  \item OULAD represents selected Open University offerings, not all education.
+  \item VLE records omit offline study and unrecorded activity.
+  \item Final outcomes and unregistration dates do not contain every reason for
+    an outcome.
+  \item Demographic fields are sensitive contextual variables, not explanations
+    of performance.
+\end{itemize}
+
+\section{Knowledge check}
+
+\begin{enumerate}
+  \item Why is \texttt{id\_student} not a student-attempt key?
+  \item What does one row in \texttt{studentVle.csv} represent?
+  \item How is an absent submission row different from a \texttt{NULL} score?
+  \item Why should negative activity days not be deleted automatically?
+  \item Which table connects a submission to its module-presentation?
+\end{enumerate}
+
+\begin{exercisebox}{Exercise 3.1: Build the grain and key worksheet}
+Without looking back at \cref{tab:source-grains}, create a seven-row table with
+these columns:
+\begin{enumerate}
+  \item source file;
+  \item one-row meaning;
+  \item candidate key;
+  \item parent table;
+  \item possible null or absent-row issue; and
+  \item one analytical question the table can support.
+\end{enumerate}
+Then compare your table with the project source and correct it.
+\solutionref{sol:source-grains}
+\end{exercisebox}
+
+\begin{exercisebox}{Exercise 3.2: Trace one learner attempt}
+Choose the conceptual path from a student attempt to:
+\begin{enumerate}
+  \item its registration;
+  \item its assessments;
+  \item its recorded submissions; and
+  \item its VLE interactions.
+\end{enumerate}
+List the columns required at each transition and state where row multiplication
+could occur, meaning one starting row could turn into several matched rows. Do
+not write the join yet.
+\solutionref{sol:attempt-trace}
+\end{exercisebox}
+
+\begin{commonmistakes}
+\begin{itemize}
+  \item Calling 32,593 attempt rows ``32,593 students.'' The verified unique
+    student count is 28,785.
+  \item Treating \texttt{?} as literal text after staging.
+  \item Assuming every assessment has a due day.
+  \item Joining VLE resources by site ID without module-presentation context.
+  \item Treating absence of a submission row as a database import failure.
+\end{itemize}
+\end{commonmistakes}
+
+\transferheading
+The seven-table worksheet generalizes directly to online-store events, health
+claims, financial transactions, and app-usage logs. Before analysis, map every
+source's row meaning, identifying columns, related parent record, time
+representation, and way that values can be missing.
+
+\begin{summarybox}
+OULAD contains seven linked sources at different grains. Module, presentation,
+student, assessment, site, and relative day combine differently across tables.
+Student ID alone is not an attempt key. Missing cells and absent relationship
+rows carry different meanings. Reliable analysis begins by defining one row,
+its identifying columns, and its limitations.
+\end{summarybox}

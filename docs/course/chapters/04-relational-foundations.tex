@@ -1,0 +1,271 @@
+\chapter{Relational Database Foundations}
+\label{ch:relational-foundations}
+
+\begin{learningobjectives}
+After completing this chapter, you will be able to:
+\begin{itemize}
+  \item define database, schema, table, row, column, and datatype;
+  \item distinguish primary, foreign, and composite keys;
+  \item reason about one-to-one, one-to-many, and many-to-many relationships;
+  \item explain normalization, referential integrity, views, and indexes;
+  \item predict how a join can change row counts; and
+  \item connect OULAD source grains to the project's raw, staging, and core
+    layers.
+\end{itemize}
+\end{learningobjectives}
+
+\section{The relational model}
+
+A \term{relational database} organizes data into relations commonly presented
+as tables. The relational model provides a disciplined way to identify rows,
+connect tables, and express transformations \citep{codd1970}. PostgreSQL is the
+database system used by this project \citep{postgres16}.
+
+\begin{description}
+  \item[Database] A named collection of data and database objects. Here it is
+    \texttt{learning\_analytics}.
+  \item[Schema] A namespace inside a database. The project uses
+    \texttt{raw}, \texttt{staging}, \texttt{core}, \texttt{quality},
+    \texttt{analytics}, and \texttt{features}.
+  \item[Table] A stored relation made of rows and columns.
+  \item[Row] One observation at the table's declared grain.
+  \item[Column] One named attribute of every row.
+  \item[Datatype] The allowed representation and operations for a column, such
+    as \texttt{text}, \texttt{integer}, \texttt{numeric}, or \texttt{boolean}.
+\end{description}
+
+\section{Why the project has layers}
+
+\begin{table}[htbp]
+\centering
+\caption{Database layers and their contracts}
+\label{tab:schema-layers}
+\begin{tabularx}{\textwidth}{L{0.16\textwidth}L{0.29\textwidth}Y}
+\toprule
+Schema & Responsibility & Example \\
+\midrule
+\texttt{raw} & Preserve source columns for loading and reconciliation & Dates and IDs often land as text \\
+\texttt{staging} & Normalize names, types, and missing markers & \texttt{NULLIF(date, '?')::integer} \\
+\texttt{core} & Enforce stable grains, keys, values, and relationships & Composite primary key for attempts \\
+\texttt{quality} & Persist executable checks and severity & Orphan, duplicate, range, and category checks \\
+\texttt{analytics} & Define reusable analytical metrics and marts & Weekly engagement and assessment progress \\
+\texttt{features} & Construct point-in-time model snapshots & One attempt-week with a future eligible assessment \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{plainlanguage}
+The layers separate evidence from interpretation. Raw tables answer ``what was
+in the file?'' Staging answers ``how should the values be represented?''
+Core answers ``what relationships and rules are dependable?'' Later layers
+answer analytical questions.
+\end{plainlanguage}
+
+\section{Keys}
+
+A \term{primary key} uniquely identifies a stored row and cannot be null. A
+\term{foreign key} requires a value to match a key in another table. A
+\term{composite key} uses more than one column.
+
+The implemented attempt table declares:
+
+\begin{lstlisting}[language=SQL,caption={Selected key and relationship clauses
+from \texttt{sql/03\_core.sql}.}]
+CREATE TABLE core.student_attempts (
+    code_module text NOT NULL,
+    code_presentation text NOT NULL,
+    id_student integer NOT NULL,
+    ...
+    PRIMARY KEY (
+        code_module,
+        code_presentation,
+        id_student
+    ),
+    FOREIGN KEY (code_module, code_presentation)
+        REFERENCES core.module_presentations
+        (code_module, code_presentation)
+);
+\end{lstlisting}
+
+\subsection{Why the key is composite}
+
+A student can appear in multiple modules or presentations.
+Therefore, \texttt{id\_student} does not identify an attempt. The three-column
+key encodes the actual row meaning.
+
+\begin{validationbox}
+To test a proposed key, group by its columns and search for groups with more
+than one row:
+\begin{lstlisting}[language=SQL]
+SELECT
+    code_module,
+    code_presentation,
+    id_student,
+    count(*) AS rows_at_key
+FROM staging.student_info
+GROUP BY 1, 2, 3
+HAVING count(*) > 1;
+\end{lstlisting}
+The saved project run found zero duplicate attempt keys.
+\end{validationbox}
+
+\section{Relationships and cardinality}
+
+\term{Cardinality} describes how rows in one table relate to rows in another.
+
+\begin{description}
+  \item[One-to-one] Each row matches at most one row on the other side. The
+    project expects one registration row for one student attempt.
+  \item[One-to-many] One parent can match many children. A module-presentation
+    defines multiple assessments.
+  \item[Many-to-many] Multiple rows on both sides can match. This relationship
+    generally requires an associative table or careful analytical
+    pre-aggregation.
+\end{description}
+
+An attempt can have many assessments and many VLE interaction rows. If those
+two child tables are joined to the attempt simultaneously without
+pre-aggregation, each assessment can pair with each interaction. The resulting
+row multiplication is mathematically valid as a join result but wrong for most
+analytical questions.
+
+\subsection{The five join questions}
+
+Before every join, answer:
+\begin{enumerate}
+  \item What does one row in the left input represent?
+  \item What does one row in the right input represent?
+  \item Which columns form the join key?
+  \item What should one output row represent?
+  \item How should the output row count change?
+\end{enumerate}
+
+SQL joins are taught in the forthcoming chapter, but cardinality reasoning must
+come first.
+
+\section{Referential integrity}
+
+\term{Referential integrity} means that a child reference points to a valid
+parent. For example, every core assessment's module-presentation must exist in
+\texttt{core.module\_presentations}.
+
+Not every source relationship can be declared conveniently as a foreign key.
+The project supplements core constraints with explicit anti-join checks:
+
+\begin{lstlisting}[language=SQL,caption={Conceptual form of the implemented
+orphan-assessment check.}]
+SELECT count(*) AS orphan_assessments
+FROM staging.assessments AS assessment
+LEFT JOIN staging.courses AS course
+  USING (code_module, code_presentation)
+WHERE course.code_module IS NULL;
+\end{lstlisting}
+
+The expected result is zero. A nonzero result means the source contains an
+assessment whose parent module-presentation is absent.
+
+\section{Nulls and constraints}
+
+SQL \texttt{NULL} means the value is unknown or absent under the database
+representation. It is not zero and not an empty string. Conditions such as
+\texttt{score = NULL} do not work; use \texttt{score IS NULL}.
+
+The core layer adds \term{constraints}:
+\begin{itemize}
+  \item \texttt{NOT NULL} for required values;
+  \item \texttt{CHECK (score BETWEEN 0 AND 100)};
+  \item accepted assessment types;
+  \item accepted final-result categories; and
+  \item positive presentation lengths and studied credits.
+\end{itemize}
+
+Constraints prevent invalid future writes. Quality queries also document and
+profile the source before or beyond what constraints can express.
+
+\section{Normalization and denormalization}
+
+\term{Normalization} separates facts so that each fact is stored at an
+appropriate grain. Module-presentation details, assessments, attempts,
+resources, submissions, and interactions therefore live in different core
+tables.
+
+\term{Denormalization} deliberately combines or aggregates facts for repeated
+analytical use. The project's materialized weekly engagement mart is
+denormalized to one active attempt-week. It is not a replacement for the core
+tables; it is a derived analytical product.
+
+\section{Views, materialized views, and indexes}
+
+\begin{description}
+  \item[View] A saved query evaluated when read. The staging layer uses views so
+    source-faithful raw tables remain available.
+  \item[Materialized view] A saved query whose result rows are stored and later
+    refreshed or rebuilt. The project uses these for expensive analytical
+    marts.
+  \item[Index] An auxiliary structure that can speed selected access patterns
+    while using storage and adding write cost.
+\end{description}
+
+These concepts are fully developed in forthcoming SQL chapters. At this stage,
+remember that an index does not change the meaning or grain of a table.
+
+\section{Knowledge check}
+
+\begin{enumerate}
+  \item Why does the project preserve raw text before casting values?
+  \item What rule does the attempt composite key enforce?
+  \item Give one one-to-many OULAD relationship.
+  \item Explain how joining two child tables can multiply rows.
+  \item What is the difference between a view and a materialized view?
+  \item Why are both constraints and quality queries useful?
+\end{enumerate}
+
+\begin{exercisebox}{Exercise 4.1: Diagnose a dangerous join plan}
+A learner proposes joining attempts, assessments, and VLE interactions in one
+query using only module and presentation. Before writing SQL:
+\begin{enumerate}
+  \item state each input grain;
+  \item describe the expected multiplication;
+  \item identify the missing student key where applicable;
+  \item propose which child data should be pre-aggregated; and
+  \item define the desired output grain.
+\end{enumerate}
+\solutionref{sol:dangerous-join}
+\end{exercisebox}
+
+\begin{exercisebox}{Exercise 4.2: Classify database rules}
+For each rule, choose primary key, foreign key, check constraint, null rule, or
+quality query, and justify the choice:
+\begin{enumerate}
+  \item an assessment weight must be between 0 and 100;
+  \item an interaction site should exist in the same presentation;
+  \item an attempt is unique by module, presentation, and student;
+  \item missing deprivation band should remain visible; and
+  \item the official archive should contain 22 course rows.
+\end{enumerate}
+\solutionref{sol:database-rules}
+\end{exercisebox}
+
+\begin{commonmistakes}
+\begin{itemize}
+  \item Declaring a key before defining row grain.
+  \item Believing a successful join preserves the intended row count.
+  \item Replacing unknown values with zero.
+  \item Treating indexes as data-cleaning tools.
+  \item Removing the raw layer after typed tables are built.
+\end{itemize}
+\end{commonmistakes}
+
+\transferheading
+Layered relational design applies beyond OULAD. Preserve a source-faithful
+landing layer, make type and missingness decisions visible, enforce dependable
+core contracts, and build denormalized analytical products only after the
+grain is stable.
+
+\begin{summarybox}
+The project uses six PostgreSQL schemas to separate source evidence, typed
+representations, constrained core data, validation, analytics, and features.
+Keys express row grain; foreign keys and quality checks express relationships.
+Nulls, constraints, cardinality, and row multiplication must be reasoned about
+before analytical SQL is trusted.
+\end{summarybox}

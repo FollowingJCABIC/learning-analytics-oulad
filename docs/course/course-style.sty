@@ -1,0 +1,212 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{course-style}[2026/07/26 Learning Analytics Course Edition 0.1]
+
+\RequirePackage[T1]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[english]{babel}
+\RequirePackage{lmodern}
+\RequirePackage{microtype}
+\RequirePackage{geometry}
+\RequirePackage{xcolor}
+\RequirePackage{graphicx}
+\RequirePackage{booktabs}
+\RequirePackage{longtable}
+\RequirePackage{tabularx}
+\RequirePackage{array}
+\RequirePackage{enumitem}
+\RequirePackage{listings}
+\RequirePackage{upquote}
+\RequirePackage{fancyhdr}
+\RequirePackage{titlesec}
+\RequirePackage{caption}
+\RequirePackage{needspace}
+\RequirePackage{tikz}
+\RequirePackage{tcolorbox}
+\RequirePackage{natbib}
+\RequirePackage{hyperref}
+\RequirePackage[nameinlink,noabbrev]{cleveref}
+
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit}
+\tcbuselibrary{breakable}
+
+\geometry{
+  letterpaper,
+  inner=1.05in,
+  outer=0.85in,
+  top=0.9in,
+  bottom=0.95in,
+  headheight=15pt
+}
+
+\definecolor{CourseInk}{HTML}{17212B}
+\definecolor{CourseRed}{HTML}{8E3B46}
+\definecolor{CourseGold}{HTML}{B58A3A}
+\definecolor{CourseBlue}{HTML}{2E6273}
+\definecolor{CourseGreen}{HTML}{3D6B58}
+\definecolor{CourseGray}{HTML}{5C6873}
+\definecolor{CourseLight}{HTML}{F4F6F7}
+\definecolor{CourseWarm}{HTML}{FAF6EE}
+\definecolor{CodeBack}{HTML}{F7F8F8}
+\definecolor{CodeComment}{HTML}{4D715D}
+\definecolor{CodeKeyword}{HTML}{7B3040}
+\definecolor{CodeString}{HTML}{2E6273}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=CourseRed,
+  citecolor=CourseBlue,
+  urlcolor=CourseBlue,
+  pdftitle={Learning Analytics with OULAD - Working Through a Real Data Project Together},
+  pdfauthor={Jose G. Chavez},
+  pdfsubject={OULAD, relational data, PostgreSQL, validation, and SQL foundations}
+}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5.5pt plus 1pt minus 1pt}
+\setlist[itemize]{leftmargin=1.45em,itemsep=2pt,topsep=4pt}
+\setlist[enumerate]{leftmargin=1.65em,itemsep=3pt,topsep=4pt}
+\renewcommand{\arraystretch}{1.18}
+
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\color{CourseInk}}
+  {\filleft\Large\color{CourseGold}\chaptertitlename\ \thechapter}
+  {0.4ex}
+  {\titlerule\vspace{1ex}\Huge}
+  [\vspace{0.8ex}\titlerule]
+\titleformat{\section}
+  {\Large\bfseries\color{CourseRed}}
+  {\thesection}{0.65em}{}
+\titleformat{\subsection}
+  {\large\bfseries\color{CourseBlue}}
+  {\thesubsection}{0.6em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE]{\small\color{CourseGray}\nouppercase{\leftmark}}
+\fancyhead[RO]{\small\color{CourseGray}\nouppercase{\rightmark}}
+\fancyfoot[C]{\small\color{CourseGray}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\chaptermark}[1]{\markboth{#1}{}}
+\renewcommand{\sectionmark}[1]{\markright{#1}}
+
+\lstdefinestyle{coursecode}{
+  backgroundcolor=\color{CodeBack},
+  basicstyle=\ttfamily\small,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  columns=fullflexible,
+  commentstyle=\color{CodeComment}\itshape,
+  frame=single,
+  framerule=0.35pt,
+  rulecolor=\color{CourseGray!45},
+  keepspaces=true,
+  keywordstyle=\color{CodeKeyword}\bfseries,
+  numbers=left,
+  numbersep=8pt,
+  numberstyle=\scriptsize\color{CourseGray},
+  showstringspaces=false,
+  stringstyle=\color{CodeString},
+  tabsize=2,
+  upquote=true,
+  xleftmargin=1.3em,
+  framexleftmargin=1em
+}
+\lstset{style=coursecode}
+
+\newtcolorbox{learningobjectives}{
+  breakable,
+  colback=CourseWarm,
+  colframe=CourseGold,
+  title=Learning objectives,
+  fonttitle=\bfseries,
+  arc=1mm,
+  boxrule=0.7pt
+}
+\newtcolorbox{plainlanguage}{
+  breakable,
+  colback=CourseLight,
+  colframe=CourseBlue,
+  title=In plain language,
+  fonttitle=\bfseries,
+  arc=1mm,
+  boxrule=0.7pt
+}
+\newtcolorbox{projectconnection}{
+  breakable,
+  colback=white,
+  colframe=CourseGreen,
+  title=Connection to the OULAD project,
+  fonttitle=\bfseries,
+  arc=1mm,
+  boxrule=0.7pt
+}
+\newtcolorbox{validationbox}{
+  breakable,
+  colback=CourseLight,
+  colframe=CourseGreen,
+  title=Validation checkpoint,
+  fonttitle=\bfseries,
+  arc=1mm,
+  boxrule=0.7pt
+}
+\newtcolorbox{commonmistakes}{
+  breakable,
+  colback=CourseWarm,
+  colframe=CourseRed,
+  title=Common mistakes and troubleshooting,
+  fonttitle=\bfseries,
+  arc=1mm,
+  boxrule=0.7pt
+}
+\newtcolorbox{exercisebox}[1]{
+  breakable,
+  colback=white,
+  colframe=CourseBlue,
+  title={#1},
+  fonttitle=\bfseries,
+  arc=1mm,
+  boxrule=0.7pt
+}
+\newtcolorbox{summarybox}{
+  breakable,
+  colback=CourseLight,
+  colframe=CourseInk,
+  title=Chapter summary,
+  fonttitle=\bfseries,
+  arc=1mm,
+  boxrule=0.7pt
+}
+\newtcolorbox{editionnote}{
+  breakable,
+  colback=CourseWarm,
+  colframe=CourseRed,
+  title=Edition status,
+  fonttitle=\bfseries,
+  arc=1mm,
+  boxrule=0.9pt
+}
+
+\newcommand{\term}[1]{\textbf{\color{CourseInk}#1}}
+\newcommand{\projectfile}[1]{\nolinkurl{#1}}
+\newcommand{\verified}[1]{\textbf{\color{CourseGreen}Verified result:} #1}
+\newcommand{\transferheading}{\subsection*{Transfer to another dataset}}
+\newcommand{\solutionref}[1]{See the guided solution in \cref{#1}.}
+
+\newcommand{\ForthcomingChapter}[4]{
+  \chapter{#1}
+  \begin{editionnote}
+  \textbf{Forthcoming after Course Edition 0.1.} This chapter is part of the
+  approved course architecture, but its lessons, exercises, and solutions have
+  not yet been written. It is not represented as completed work.
+  \end{editionnote}
+  \section*{Planned learning objectives}
+  #2
+  \section*{Planned practical work}
+  #3
+  \section*{Existing project sources}
+  #4
+}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}

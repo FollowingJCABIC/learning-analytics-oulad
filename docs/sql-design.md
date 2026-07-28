@@ -1,4 +1,4 @@
-# SQL implementation
+# SQL Design and Implementation
 
 ## Relational design and grains
 
@@ -42,7 +42,7 @@ in every attempt-level join.
 | `08_exports.sql` | stable report-facing views |
 | `09_performance.sql` | captured `EXPLAIN ANALYZE` plans |
 
-## Techniques demonstrated
+## SQL techniques used
 
 - multi-table joins at explicit grains;
 - conditional aggregates with `FILTER`;

@@ -1,0 +1,366 @@
+\chapter{Getting Started Together}
+\label{ch:orientation}
+
+\section*{Let me tell you how I approach a data project}
+
+If we were sitting down together with these files for the first time, I would
+not begin by opening SQL or trying to build a model. I would begin with a few
+ordinary questions: Where did these records come from? Who created them? What
+does one row describe? What might be missing? What would I need to check before
+I trusted a number?
+
+That is how I begin my work as a data scientist. I first learn the story of the
+data. Later, you will see technical names for parts of that process, but the
+idea itself is simple: before we calculate anything, we should understand what
+we have in front of us.
+
+In this project, we have seven files about courses, students, registrations,
+online activity, and assessments. We are going to open them carefully, move
+them into a database, ask questions with SQL, and check our answers as we go.
+I will explain the choices I made in the project, including the places where I
+had to slow down or be cautious.
+
+You do not need to memorize every new word on the first pass. I will introduce
+the language when it becomes useful, and we will keep returning to the same
+central question: \emph{What does the data actually allow us to say?}
+
+\begin{learningobjectives}
+After completing this chapter, you will be able to:
+\begin{itemize}
+  \item state what you will build in Course Edition 0.1;
+  \item distinguish project implementation from course documentation;
+  \item identify the prerequisites, checkpoints, and evidence standards;
+  \item describe the complete project workflow at a high level; and
+  \item use the course's read-run-validate-reflect study cycle.
+\end{itemize}
+\end{learningobjectives}
+
+\section{A few words we will use together}
+
+\begin{plainlanguage}
+This is a translation guide, not a test. At the simplest level, the project is
+a folder with data files that hold recorded information and instruction files
+that tell the computer what to do with it. The terms below give us shorter
+names for those familiar ideas.
+\end{plainlanguage}
+
+The terms in \cref{tab:first-vocabulary} will appear throughout the course.
+Skim them now and return whenever a word feels unfamiliar. I do not expect you
+to memorize the table before continuing.
+
+\begin{longtable}{@{}L{0.22\textwidth}L{0.71\textwidth}@{}}
+\caption{First vocabulary for the course}\label{tab:first-vocabulary}\\
+\toprule
+Term & Meaning in this course \\
+\midrule
+\endfirsthead
+\toprule
+Term & Meaning in this course \\
+\midrule
+\endhead
+\term{Data} &
+Recorded facts or values. A \term{dataset} is an organized collection of those
+records. Data can be useful without being complete or perfectly accurate. \\
+\term{Data science} &
+The work of turning recorded information into an answer I can explain and
+stand behind. Programming, databases, and statistics help me do that work, but
+the work begins with understanding the data and the question. \\
+\term{File, folder, path} &
+A file stores content. A folder, also called a directory, groups files. A path
+is the address of a file or folder, such as
+\projectfile{sql/02_staging.sql}. \\
+\term{CSV file} &
+A plain-text table in which values are separated by commas. CSV means
+comma-separated values. Chapter 3 opens one and explains every part. \\
+\term{Archive} &
+One packaged file that contains other files, commonly in ZIP format. Projects
+often download one archive and then unpack its contents. \\
+\term{Table, row, column} &
+A table arranges data in a grid. A row usually describes one recorded thing or
+event. A column contains one kind of value, such as a student identifier or
+date. \\
+\term{Code and script} &
+Code is text written as instructions for a computer. A script is a file of
+code intended to perform a sequence of steps. \\
+\term{Terminal and command} &
+A terminal is a text-based way to interact with the computer. A command is one
+instruction typed there, such as asking PostgreSQL to run a SQL file. \\
+\term{Database} &
+Software-managed storage for organized data. Unlike a single spreadsheet, a
+database can hold many related tables and enforce rules about them. \\
+\term{PostgreSQL} &
+The database program used by this project. It stores the OULAD tables and runs
+the project's SQL instructions. \\
+\term{SQL and query} &
+SQL is a language for working with relational databases. A query is a SQL
+request, often asking PostgreSQL to return, combine, summarize, or check rows. \\
+\term{Python} &
+A general-purpose programming language. This project uses Python to download
+and audit files and, in later stages, to analyze, chart, and model data. \\
+\term{Repository} &
+The main project folder and its organized contents. The word often implies
+that file history is tracked with Git, a file-history tool, but you do not need
+Git to read the course or query the database. \\
+\term{Implementation and documentation} &
+The implementation is the working code and settings that perform the project.
+Documentation explains what that implementation does and how to use or
+evaluate it. \\
+\term{Input and output} &
+An input is what a step receives. An output is what it produces. The official
+CSV files are inputs; checked tables and charts are outputs. \\
+\term{Workflow or pipeline} &
+An ordered sequence in which the output of one step becomes the input to the
+next. \emph{Pipeline} is the common technical word; \emph{workflow} is the same
+idea in plainer language. \\
+\term{Analysis, model, dashboard} &
+Analysis examines data to answer a question. A model is a mathematical rule
+learned or estimated from data. A dashboard is a visual display of selected
+results. They are different products and should not be confused. \\
+\term{Reproducible} &
+A result is reproducible when another person can follow the recorded source,
+code, settings, and steps and obtain the same result. \\
+\bottomrule
+\end{longtable}
+
+\begin{validationbox}
+Before continuing, make sure you can explain this sentence:
+\begin{quote}
+``A script reads an input CSV file, loads its rows into PostgreSQL, and a SQL
+query produces an output table.''
+\end{quote}
+It is fine to return to the vocabulary table while translating it into your own
+words.
+\end{validationbox}
+
+\section{The project we will work through together}
+
+I built this course around a real data project:
+\emph{Learning Analytics: Engagement, Assessment, and Outcome Forecasting}.
+The project uses the Open University Learning Analytics Dataset (OULAD), a set
+of seven linked CSV files published for research and education
+\citep{oulad_dataset,oulad_paper}.
+
+Here is the path we will follow:
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  node distance=6mm,
+  box/.style={
+    draw=CourseBlue,
+    rounded corners=1mm,
+    fill=CourseLight,
+    minimum width=0.82\textwidth,
+    minimum height=8mm,
+    align=center,
+    font=\small
+  },
+  arrow/.style={-{Latex[length=2.4mm]},thick,color=CourseGold}
+]
+\node[box] (source) {Official OULAD CSV data files};
+\node[box,below=of source] (audit) {Check that the downloaded files are complete and unchanged};
+\node[box,below=of audit] (database) {Store the original values, then convert them into usable tables};
+\node[box,below=of database] (quality) {Test the tables and prepare carefully defined summaries};
+\node[box,below=of quality] (python) {Analyze, chart, and eventually make and test predictions};
+\node[box,below=of python] (output) {Save tables, figures, findings, and a results dashboard};
+\draw[arrow] (source) -- (audit);
+\draw[arrow] (audit) -- (database);
+\draw[arrow] (database) -- (quality);
+\draw[arrow] (quality) -- (python);
+\draw[arrow] (python) -- (output);
+\end{tikzpicture}
+\caption{The path we will follow through the project. Edition 0.1 takes us
+through the SQL foundations stage; later lessons will continue the work.}
+\label{fig:project-lineage}
+\end{figure}
+
+\subsection{The shorter names used in the project files}
+
+The diagram begins in everyday language. When you open the project files, you
+will see the following shorter names for the same steps:
+\begin{description}
+  \item[Checksum] A compact fingerprint used to check whether a file's bytes
+    match the expected file.
+  \item[Audit] A recorded inspection of source files, such as checking names,
+    row counts, columns, and missing values.
+  \item[Raw layer] Database tables that preserve source text as closely as
+    practical.
+  \item[Staging layer] An intermediate area where text is converted into
+    meaningful types, names, and missing values.
+  \item[Core layer] The main checked tables used for analysis.
+  \item[Data validation] Tests that compare the data with explicit
+    expectations.
+  \item[Snapshot] A saved view of information as of a particular course week.
+  \item[Lineage] The traceable path from original input to a reported result.
+\end{description}
+
+\begin{plainlanguage}
+We are not starting with an empty practice exercise. We are taking apart a
+working project together. The code shows what the computer does; my job in this
+course is to explain why the steps are there, what choices they contain, and
+how we can check them.
+\end{plainlanguage}
+
+\section{Edition 0.1 boundary}
+
+The first edition fully develops the foundation shown in
+\cref{tab:edition-scope}. It deliberately does not rush through the modeling
+half of the project. Those chapters need their own worked examples, exercises,
+and careful treatment of temporal leakage, which means accidentally using
+information from the future to make an earlier prediction.
+
+\begin{table}[htbp]
+\centering
+\caption{Course Edition 0.1 scope}
+\label{tab:edition-scope}
+\begin{tabularx}{\textwidth}{L{0.27\textwidth}YY}
+\toprule
+Area & Status in this edition & Concrete learner output \\
+\midrule
+Learning analytics and OULAD & Complete & Careful question statement and source-table map \\
+Relational foundations & Complete & Row meaning (grain), key, and relationship worksheet \\
+PostgreSQL setup & Complete & Verified database connection \\
+Raw import & Complete & Seven populated raw tables \\
+Data validation & Complete & Interpreted quality-check report \\
+Introductory SQL & Complete & Reproducible OULAD query set \\
+Joins through modeling & Forthcoming & Architecture only; no claim of completion \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Who I wrote this for}
+
+I wrote this for someone who wants to learn SQL and data work by staying with
+one project long enough to understand it. You do \emph{not} need prior OULAD
+knowledge or advanced SQL. We will build the database and SQL ideas as we need
+them.
+
+\subsection{Prerequisites}
+
+\begin{longtable}{L{0.27\textwidth}L{0.28\textwidth}L{0.36\textwidth}}
+\caption{Prerequisite expectations and support}\label{tab:prerequisites}\\
+\toprule
+Skill & Expected starting point & Support in this edition \\
+\midrule
+\endfirsthead
+\toprule
+Skill & Expected starting point & Support in this edition \\
+\midrule
+\endhead
+Files and folders & Able to locate a project folder & Exact paths from the main project folder are supplied \\
+Terminal & Able to run a copied command & Commands are explained before use \\
+Python & No pandas experience required yet & Installation is covered; Python analysis is forthcoming \\
+PostgreSQL & No prior database administration required & Two supported setup paths are taught \\
+SQL & No prior SQL required & Starts with \texttt{SELECT}, not advanced windows \\
+Statistics & Basic percentages are helpful & Formal statistical reasoning is forthcoming \\
+Git & Useful but not required for the lessons & No Git operation is required to query the database \\
+\bottomrule
+\end{longtable}
+
+\section{How I suggest we work through each chapter}
+
+I suggest that we use the same five-step rhythm throughout the course:
+
+\begin{enumerate}
+  \item \textbf{Read the question.} Begin with the analytical reason for a
+    command or query.
+  \item \textbf{Predict the output.} State the expected row grain, columns, and
+    possible missing values before running code. The \term{grain} is what one
+    output row will represent.
+  \item \textbf{Run the smallest useful step.} Do not execute the entire
+    workflow merely to learn one SQL clause, or instruction.
+  \item \textbf{Validate.} Compare counts, keys, ranges, and categories with a
+    known contract.
+  \item \textbf{Reflect and transfer.} Explain what would change with a
+    different dataset.
+\end{enumerate}
+
+\begin{projectconnection}
+The project itself follows this logic. For example,
+\projectfile{sql/04_quality.sql} does not merely calculate summaries. It records
+the expected rules, called a data contract, counts rows that break them, records
+how serious each failure is, and preserves the result for later inspection.
+\end{projectconnection}
+
+\section{A map of the repository}
+
+\begin{table}[htbp]
+\centering
+\caption{Project paths used in Edition 0.1}
+\label{tab:repo-map}
+\begin{tabularx}{\textwidth}{L{0.35\textwidth}Y}
+\toprule
+Path & Role in the learning sequence \\
+\midrule
+\projectfile{README.md} & Project scope, architecture, results, and reproduction order \\
+\projectfile{DATA_LICENSE.md} & Dataset citation, license, and access note \\
+\projectfile{src/learning_analytics/download.py} & Download and file-fingerprint verification \\
+\projectfile{src/learning_analytics/audit.py} & Source profiling and saved audit outputs \\
+\projectfile{sql/00_database.sql} & Six named database areas, called schemas \\
+\projectfile{sql/01_raw_tables.sql} & Source-faithful landing tables \\
+\projectfile{sql/02_staging.sql} & Types, names, and missing-value normalization \\
+\projectfile{sql/03_core.sql} & Keys, constraints, and core relational tables \\
+\projectfile{sql/04_quality.sql} & Executable data-quality framework \\
+\projectfile{sql/gallery/queries.sql} & Query sequence used as the SQL source bank \\
+\projectfile{reports/tables/} & Verified source counts and quality results \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{How we will keep the work honest}
+
+I do not want you to trust a number just because it looks polished. In this
+course, every numeric claim must lead back to a saved result or a query we can
+run. For example, the statement ``OULAD contains 10,655,280 VLE activity
+records'' is supported by
+\projectfile{reports/tables/source_file_profile.csv} and a SQL row-count check.
+If I show a teaching query whose result has not been saved, I will describe
+what its columns and rows should look like instead of inventing a result.
+
+\section{Knowledge check}
+
+\begin{enumerate}
+  \item Which stages of \cref{fig:project-lineage} are fully taught in Edition
+    0.1?
+  \item What is the difference between a verified result and an instructional
+    query?
+  \item Why does the course ask you to predict output grain before running SQL?
+  \item Which skills are legitimate prerequisites, and which are taught here?
+\end{enumerate}
+
+\begin{exercisebox}{Exercise 1.1: Write your study contract}
+In four short paragraphs, record:
+\begin{enumerate}
+  \item what you expect to build by the end of Edition 0.1;
+  \item which prerequisite is currently weakest;
+  \item how you will validate a result before trusting it; and
+  \item which forthcoming topic you most want to reach.
+\end{enumerate}
+Your output should be a one-page study note. No code is required.
+\solutionref{sol:orientation}
+\end{exercisebox}
+
+\begin{commonmistakes}
+\begin{itemize}
+  \item \textbf{Treating the dashboard as the course.} It communicates results;
+    it does not teach the implementation.
+  \item \textbf{Running everything immediately.} Large imports obscure basic
+    concepts. Follow the chapter checkpoints.
+  \item \textbf{Equating completion with understanding.} A command that exits
+    successfully can still produce rows at the wrong level of detail.
+\end{itemize}
+\end{commonmistakes}
+
+\transferheading
+Before working with any unfamiliar project folder, draw the path from source to
+output, distinguish generated files from editable source, and decide which
+claims can be regenerated. This habit transfers to nearly every analytical
+project.
+
+\begin{summarybox}
+Edition 0.1 is a bounded, project-based course release. It teaches the OULAD
+context, the organization of linked database tables, PostgreSQL setup, source
+import, validation, and SQL foundations. It does not pretend that the later
+analytical and modeling chapters are finished. Each lesson follows a read,
+predict, run, validate, and reflect cycle.
+\end{summarybox}

@@ -1,7 +1,7 @@
-# Executed findings
+# Findings from the saved analysis
 
-Generated from the PostgreSQL marts and saved model outputs. No finding below
-is inferred from the dataset description alone.
+These findings come from the PostgreSQL marts and saved model outputs. None is
+inferred from the dataset description alone.
 
 ## Verified scale
 
@@ -33,26 +33,44 @@ Warnings and informational profiles remain visible in
 `reports/tables/sql_quality_results.csv`; they are not silently converted into
 passes.
 
-## Weekly outcome forecasting
+## Forecasting the next assessment
 
-The held-out test set contains complete 2014J presentations. The strongest test
-precision-recall AUC was **0.642** for
-`gradient_boosted_tree`. The calibrated logistic model achieved PR AUC
-**0.594**, Brier score **0.130**,
-precision **0.616**, and recall
-**0.421** at the prespecified 0.50 threshold.
+At the end of one course week, the model estimates whether the next non-exam
+assessment for that student-course attempt will be missing by its due date or
+have a recorded score below 40. One test record is one weekly snapshot with a
+known upcoming assessment. Exams are excluded because their due dates are often
+unavailable.
 
-These are forecasts of the next recorded assessment event, not measures of
-motivation, aptitude, or instructional need. Threshold analysis is reported
-separately because workload and false alerts change with the threshold.
+The later 2014J test contains **117,186 weekly snapshots**. The target
+occurred after **24,724 snapshots (21.1%)**.
+The boosted challenger ranked cases best, with precision-recall AUC
+**0.642**. The calibrated logistic model used for the alert
+example reached PR AUC **0.594** and Brier score
+**0.130**. It is the inspectable reference because its
+coefficients, probability calibration, and cutoff behavior are easier to check.
 
-The separate 28-day withdrawal investigation had held-out prevalence
-**3.9%**, PR AUC
-**0.082**, precision
-**0.080**, and recall
-**0.617** at threshold 0.50. Its low precision makes
-it unsuitable for individual use, and OULAD does not record many reasons for
-withdrawal.
+At a 0.50 cutoff, the calibrated logistic model flagged
+**16,901 snapshots
+(14.4%)**. About
+**61.6% of alerts were correct**, and the
+alerts found **42.1% of the actual cases**. A
+correct alert came a median of
+**26 days** before the assessment.
+This result may support human review; it should not label students or make an
+automatic decision.
+
+## A separate withdrawal model produced too many false alerts
+
+The second model asks whether a recorded unregistration will occur within 28
+days after one of the same weekly snapshots. In the later 2014J test records,
+that happened after **3.9%** of snapshots.
+At a 0.50 cutoff, the model flagged
+**30.3%** of snapshots, but only
+**8.0%** of its alerts were correct. It found
+**61.7%** of the withdrawals that did occur.
+That is far too many false alerts for individual use. I report the unsuccessful
+result because it shows where the available records did not support the proposed
+use.
 
 ## Interpretation limits
 

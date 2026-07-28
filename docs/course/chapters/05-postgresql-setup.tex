@@ -1,0 +1,276 @@
+\chapter{PostgreSQL and Project Setup}
+\label{ch:postgresql-setup}
+
+\begin{learningobjectives}
+After completing this chapter, you will be able to:
+\begin{itemize}
+  \item distinguish the Docker and local PostgreSQL setup paths;
+  \item create an isolated Python 3.11 or newer environment;
+  \item explain the project database URL and its credential fields;
+  \item start or connect to PostgreSQL 16 without exposing credentials;
+  \item verify the database, schemas, Python package, and client tools; and
+  \item diagnose common role, port, environment, and path failures.
+\end{itemize}
+\end{learningobjectives}
+
+\section{What the environment must provide}
+
+The implemented project expects:
+\begin{itemize}
+  \item Python 3.11 or newer;
+  \item PostgreSQL 16;
+  \item the \texttt{psql} command-line client;
+  \item project Python dependencies; and
+  \item either Docker Compose or a trusted local PostgreSQL installation.
+\end{itemize}
+
+\begin{plainlanguage}
+Python runs the source audit and later analysis. PostgreSQL owns the relational
+data and SQL pipeline. The database URL tells Python and shell scripts which
+PostgreSQL server, database, and role to use.
+\end{plainlanguage}
+
+\section{Start from the repository root}
+
+Every command in this chapter begins at the directory containing
+\projectfile{pyproject.toml}, \projectfile{Makefile}, \projectfile{sql/}, and
+\projectfile{src/}. Verify:
+
+\begin{lstlisting}[language=bash]
+pwd
+ls
+test -f pyproject.toml && echo "repository root found"
+\end{lstlisting}
+
+The final command should print \texttt{repository root found}. If it does not,
+stop and navigate to the Learning Analytics repository before continuing.
+
+\section{Create the Python environment}
+
+The project declares Python 3.11 or newer in \projectfile{pyproject.toml}.
+Create a local virtual environment:
+
+\begin{lstlisting}[language=bash]
+python3 --version
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+\end{lstlisting}
+
+On Windows PowerShell, activation is typically:
+
+\begin{lstlisting}[language=bash]
+.\.venv\Scripts\Activate.ps1
+\end{lstlisting}
+
+\subsection{What the commands do}
+
+\begin{description}
+  \item[\texttt{python3 -m venv .venv}] Creates an isolated environment inside
+    the repository. The environment directory is ignored by Git.
+  \item[\texttt{source .venv/bin/activate}] Makes the environment's Python and
+    installed commands active in the current shell.
+  \item[\texttt{pip install -e ".[dev]"}] Installs the project in editable mode
+    plus testing and linting dependencies.
+\end{description}
+
+\begin{validationbox}
+Run:
+\begin{lstlisting}[language=bash]
+python --version
+python -c "import learning_analytics; print('package import ok')"
+pytest --collect-only -q
+\end{lstlisting}
+The Python version must be at least 3.11, the import should succeed, and pytest
+should discover the project tests.
+\end{validationbox}
+
+\section{Understand the database URL}
+
+The project's Docker-oriented default is:
+
+\begin{lstlisting}[language=bash]
+postgresql://learning_analytics:learning_analytics@localhost:5432/learning_analytics
+\end{lstlisting}
+
+Its structure is:
+
+\begin{center}
+\texttt{postgresql://ROLE:PASSWORD@HOST:PORT/DATABASE}
+\end{center}
+
+The repeated development credential is suitable only for the local course
+container. Do not reuse it for an internet-accessible or production database.
+Do not commit real secrets.
+
+\section{Path A: Docker Compose}
+
+This is the most self-contained project-supported path. It uses
+\projectfile{docker-compose.yml} to start PostgreSQL 16 Alpine and create:
+
+\begin{itemize}
+  \item database: \texttt{learning\_analytics};
+  \item role: \texttt{learning\_analytics};
+  \item password: \texttt{learning\_analytics}; and
+  \item host port: 5432.
+\end{itemize}
+
+\begin{lstlisting}[language=bash]
+docker --version
+docker compose version
+cp .env.example .env
+make db-up
+docker compose ps
+\end{lstlisting}
+
+Wait until the service reports healthy. Then verify the exact configured
+connection:
+
+\begin{lstlisting}[language=bash]
+psql \
+  "postgresql://learning_analytics:learning_analytics@localhost:5432/learning_analytics" \
+  -c "select current_database(), current_user;"
+\end{lstlisting}
+
+Expected values are database \texttt{learning\_analytics} and user
+\texttt{learning\_analytics}.
+
+\section{Path B: Trusted local PostgreSQL}
+
+If PostgreSQL 16 is already installed locally and your operating-system user is
+a trusted PostgreSQL role, the project documents a password-free local socket
+path:
+
+\begin{lstlisting}[language=bash]
+createdb learning_analytics
+export DATABASE_URL=postgresql:///learning_analytics
+psql "$DATABASE_URL" \
+  -c "select current_database(), current_user, version();"
+\end{lstlisting}
+
+The local role will usually be your operating-system username, not
+\texttt{learning\_analytics}. That is acceptable for local study when the
+database is not exposed externally.
+
+\begin{editionnote}
+\textbf{Documented implementation ambiguity.} The Makefile target
+\texttt{make db-init} runs \texttt{createdb learning\_analytics}, but it does
+not create the password role used by the Docker-oriented default URL. On a
+local installation, export
+\texttt{DATABASE\_URL=postgresql:///learning\_analytics} as shown above. This
+course documents the distinction without changing the implementation.
+\end{editionnote}
+
+\section{Environment files versus exported variables}
+
+The repository includes \projectfile{.env.example}. Copying it provides a local
+credential reference:
+
+\begin{lstlisting}[language=bash]
+cp .env.example .env
+\end{lstlisting}
+
+The Makefile does not explicitly load \texttt{.env}. Do not assume the copy
+alone changes the current shell. For the local path, use \texttt{export
+DATABASE\_URL=...}. For one command only, prefix the variable:
+
+\begin{lstlisting}[language=bash]
+DATABASE_URL=postgresql:///learning_analytics make validate
+\end{lstlisting}
+
+\section{Create the project schemas}
+
+The import command later runs \projectfile{sql/00_database.sql}. To inspect the
+schema contract without changing it:
+
+\begin{lstlisting}[language=SQL]
+CREATE SCHEMA IF NOT EXISTS raw;
+CREATE SCHEMA IF NOT EXISTS staging;
+CREATE SCHEMA IF NOT EXISTS core;
+CREATE SCHEMA IF NOT EXISTS quality;
+CREATE SCHEMA IF NOT EXISTS analytics;
+CREATE SCHEMA IF NOT EXISTS features;
+\end{lstlisting}
+
+After import, list them:
+
+\begin{lstlisting}[language=bash]
+psql "$DATABASE_URL" -c "\dn"
+\end{lstlisting}
+
+\section{Full setup checkpoint}
+
+Do not continue until all items in \cref{tab:setup-checkpoint} pass.
+
+\begin{table}[htbp]
+\centering
+\caption{Environment checkpoint}
+\label{tab:setup-checkpoint}
+\begin{tabularx}{\textwidth}{L{0.33\textwidth}Y}
+\toprule
+Check & Passing evidence \\
+\midrule
+Repository root & \texttt{pyproject.toml} and \texttt{sql/} are visible \\
+Python version & 3.11 or newer \\
+Python package & \texttt{import learning\_analytics} succeeds \\
+PostgreSQL client & \texttt{psql --version} succeeds \\
+Server connection & \texttt{select current\_database()} returns the expected database \\
+Credential path & Docker URL or local socket URL is explicitly selected \\
+Private values & No personal password is added to tracked files \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Knowledge check}
+
+\begin{enumerate}
+  \item What are the five major parts of a PostgreSQL URL?
+  \item Why is a virtual environment useful?
+  \item Which setup path creates the \texttt{learning\_analytics} role?
+  \item Why might copying \texttt{.env.example} not change a Make command?
+  \item What query verifies both the database and current role?
+\end{enumerate}
+
+\begin{exercisebox}{Exercise 5.1: Produce an environment verification record}
+Create a text record containing:
+\begin{enumerate}
+  \item Python version;
+  \item PostgreSQL client version;
+  \item selected setup path;
+  \item database name and current role;
+  \item package-import result; and
+  \item any resolved setup error, without including a password.
+\end{enumerate}
+The expected output is a short, credential-free environment report.
+\solutionref{sol:environment}
+\end{exercisebox}
+
+\begin{commonmistakes}
+\begin{itemize}
+  \item \textbf{Role does not exist.} You used the Docker URL against a local
+    server. Export the local socket URL or create the intended role yourself.
+  \item \textbf{Connection refused.} The server is stopped, the port differs, or
+    Docker is unavailable.
+  \item \textbf{Port already in use.} Another PostgreSQL server is already on
+    5432. Choose one setup path rather than starting both.
+  \item \textbf{Package import fails.} Activate the environment and rerun the
+    editable installation.
+  \item \textbf{Wrong project root.} Relative paths in Make and shell scripts
+    assume the repository root.
+\end{itemize}
+\end{commonmistakes}
+
+\transferheading
+For another project, record the language version, dependency environment,
+database engine, connection method, secret-handling rule, and one verification
+command for each service. A reproducible environment is a documented contract,
+not merely a list of tools.
+
+\begin{summarybox}
+The project supports Docker PostgreSQL with a dedicated development role or a
+trusted local PostgreSQL socket connection. Python 3.11 or newer and an
+installed editable package are required. Environment variables must be
+explicit, credentials must remain local, and every setup stage has a concrete
+verification command.
+\end{summarybox}

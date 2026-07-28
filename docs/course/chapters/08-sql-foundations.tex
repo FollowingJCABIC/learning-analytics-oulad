@@ -1,0 +1,394 @@
+\chapter{SQL Foundations with Real OULAD Questions}
+\label{ch:sql-foundations}
+
+\begin{learningobjectives}
+After completing this chapter, you will be able to:
+\begin{itemize}
+  \item use \texttt{SELECT}, \texttt{FROM}, aliases, \texttt{LIMIT}, and
+    \texttt{ORDER BY};
+  \item filter with comparisons, logical operators, \texttt{IN},
+    \texttt{BETWEEN}, \texttt{LIKE}, and \texttt{IS NULL};
+  \item construct categories with \texttt{CASE};
+  \item use \texttt{DISTINCT}, \texttt{COUNT}, \texttt{SUM}, \texttt{AVG},
+    \texttt{MIN}, and \texttt{MAX};
+  \item aggregate with \texttt{GROUP BY} and filter groups with
+    \texttt{HAVING}; and
+  \item state and validate the input and output grain of every query.
+\end{itemize}
+\end{learningobjectives}
+
+\section{The shape of a query}
+
+A SQL query is a request for a relation. Introductory queries often follow:
+
+\begin{lstlisting}[language=SQL]
+SELECT column_or_expression
+FROM schema.table
+WHERE row_condition
+GROUP BY grouping_columns
+HAVING group_condition
+ORDER BY sorting_expression
+LIMIT number_of_rows;
+\end{lstlisting}
+
+SQL is written in this conventional order, although the database reasons about
+the clauses in a different logical sequence. Begin by identifying
+\texttt{FROM}: it tells you the input table and therefore the input grain.
+
+\section{Inspect a table safely}
+
+\subsection{Question}
+What columns and example values appear in the raw course table?
+
+\begin{lstlisting}[language=SQL,caption={Instructional inspection query.}]
+SELECT
+    code_module,
+    code_presentation,
+    module_presentation_length
+FROM raw.courses
+ORDER BY code_module, code_presentation
+LIMIT 5;
+\end{lstlisting}
+
+\subsection{Reasoning}
+\begin{itemize}
+  \item \textbf{Input grain:} one module-presentation.
+  \item \textbf{Output grain:} one module-presentation, capped at five rows.
+  \item \textbf{\texttt{SELECT}:} names the returned columns.
+  \item \textbf{\texttt{FROM}:} names the schema-qualified table.
+  \item \textbf{\texttt{ORDER BY}:} makes the limited sample deterministic.
+  \item \textbf{\texttt{LIMIT}:} protects against accidentally printing a large
+    table.
+\end{itemize}
+
+\begin{validationbox}
+\texttt{LIMIT 5} does not prove that the table contains five rows or that the
+sample represents the full distribution. Verify total row count separately.
+\end{validationbox}
+
+\section{Count rows and distinct entities}
+
+\subsection{Question}
+How many course rows, anonymized modules, attempts, and unique students exist?
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    count(*) AS module_presentation_rows,
+    count(DISTINCT code_module) AS modules
+FROM raw.courses;
+
+SELECT
+    count(*) AS student_module_attempts,
+    count(DISTINCT id_student) AS unique_students,
+    count(*) - count(DISTINCT id_student)
+        AS additional_attempt_records
+FROM core.student_attempts;
+\end{lstlisting}
+
+\verified{The expected results are 22 module-presentations, seven modules,
+32,593 attempts, 28,785 unique students, and 3,808 additional attempt records.}
+
+\subsection{Why the two counts differ}
+\texttt{count(*)} counts rows. \texttt{count(DISTINCT id\_student)} counts
+different nonnull identifiers. Their difference proves that some identifiers
+appear in more than one attempt. It does not tell you whether the repeat is
+another module, another presentation, or both.
+
+\section{Filter rows}
+
+\subsection{Comparisons and logical operators}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    code_module,
+    code_presentation,
+    id_student,
+    registration_day
+FROM core.student_attempts
+WHERE registration_day < 0
+  AND code_module IN ('AAA', 'BBB')
+ORDER BY registration_day
+LIMIT 25;
+\end{lstlisting}
+
+The query asks for attempts registered before day zero in either module AAA or
+BBB. \texttt{AND} requires both conditions. \texttt{IN} is a readable form of
+multiple equality alternatives.
+
+\subsection{\texttt{BETWEEN} and \texttt{LIKE}}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    code_module,
+    code_presentation,
+    id_student,
+    activity_day,
+    click_count
+FROM core.vle_interactions
+WHERE activity_day BETWEEN 0 AND 6
+  AND code_presentation LIKE '2014%'
+ORDER BY code_module, code_presentation, id_student
+LIMIT 100;
+\end{lstlisting}
+
+\texttt{BETWEEN 0 AND 6} includes both endpoints. The pattern
+\texttt{'2014\%'} means text beginning with 2014. The query's input and output
+grain remain interaction rows; filtering changes which rows appear, not what
+one row represents.
+
+\section{Work with null values}
+
+\subsection{Question}
+How many attempt records have no deprivation-band value?
+
+\begin{lstlisting}[language=SQL]
+SELECT count(*) AS missing_imd_band
+FROM staging.student_info
+WHERE imd_band IS NULL;
+\end{lstlisting}
+
+\verified{The saved quality profile reports 1,111 rows.}
+
+Do not write \texttt{imd\_band = NULL}. SQL null represents unknown or absent
+information and must be tested with \texttt{IS NULL} or
+\texttt{IS NOT NULL}.
+
+\section{Create an interpretable category with \texttt{CASE}}
+
+\subsection{Question}
+Can registration days be summarized into a few timing bands?
+
+\begin{lstlisting}[language=SQL,caption={Instructional categorical
+transformation.}]
+SELECT
+    CASE
+        WHEN registration_day IS NULL THEN 'unknown'
+        WHEN registration_day < 0 THEN 'before course start'
+        WHEN registration_day BETWEEN 0 AND 13 THEN 'first two weeks'
+        ELSE 'later'
+    END AS registration_timing,
+    count(*) AS attempts
+FROM core.student_attempts
+GROUP BY registration_timing
+ORDER BY attempts DESC;
+\end{lstlisting}
+
+\texttt{CASE} is evaluated from top to bottom. The explicit null branch matters:
+a null comparison is not true, so an omitted branch would place unknown values
+in \texttt{ELSE}.
+
+\begin{validationbox}
+Sum the grouped \texttt{attempts}. It should equal the total attempt count,
+32,593. If it does not, investigate whether rows were filtered or a group was
+lost.
+\end{validationbox}
+
+\section{Aggregate outcomes}
+
+\subsection{Question}
+How many attempts ended in each recorded final result?
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    final_result,
+    count(*) AS attempts,
+    round(
+        100.0 * count(*) / sum(count(*)) OVER (),
+        1
+    ) AS percent_of_attempts
+FROM core.student_attempts
+GROUP BY final_result
+ORDER BY attempts DESC;
+\end{lstlisting}
+
+\begin{table}[htbp]
+\centering
+\caption{Verified recorded outcome counts}
+\label{tab:outcome-counts}
+\begin{tabular}{lrr}
+\toprule
+Final result & Attempts & Approximate percent \\
+\midrule
+Pass & 12,361 & 37.9 \\
+Withdrawn & 10,156 & 31.2 \\
+Fail & 7,052 & 21.6 \\
+Distinction & 3,024 & 9.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The input grain is one attempt. The output grain is one final-result category.
+The grouped counts must sum to 32,593. Percentages may sum to 99.9 or 100.1
+after rounding.
+
+\section{Use numerical aggregates}
+
+\subsection{Question}
+What is the range and average of recorded nonnull assessment scores?
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    count(score) AS recorded_scores,
+    min(score) AS minimum_score,
+    max(score) AS maximum_score,
+    round(avg(score), 2) AS mean_score
+FROM core.assessment_submissions;
+\end{lstlisting}
+
+\begin{itemize}
+  \item \texttt{count(score)} excludes null scores.
+  \item \texttt{min} and \texttt{max} establish observed boundaries.
+  \item \texttt{avg} excludes nulls rather than treating them as zero.
+  \item The output grain is one summary row.
+\end{itemize}
+
+The project enforces recorded scores between 0 and 100. This query should not be
+used to infer the number of expected submissions because absent submissions
+have no row in this table.
+
+\section{Group by module-presentation}
+
+\subsection{Question}
+Which module-presentations have at least 1,000 attempt records?
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    code_module,
+    code_presentation,
+    count(*) AS attempts
+FROM core.student_attempts
+GROUP BY code_module, code_presentation
+HAVING count(*) >= 1000
+ORDER BY attempts DESC;
+\end{lstlisting}
+
+\texttt{WHERE} filters input rows before grouping. \texttt{HAVING} filters
+groups after aggregation. The output grain is one retained
+module-presentation, not one attempt.
+
+\section{Conditional aggregation}
+
+\subsection{Question}
+How many outcomes of each type occur within a module-presentation?
+
+\begin{lstlisting}[language=SQL,caption={Selected production pattern from
+\texttt{analytics.course\_outcome\_summary}.}]
+SELECT
+    code_module,
+    code_presentation,
+    count(*) AS student_attempts,
+    count(*) FILTER (
+        WHERE final_result = 'Pass'
+    ) AS passes,
+    count(*) FILTER (
+        WHERE final_result = 'Withdrawn'
+    ) AS withdrawals,
+    round(
+        avg((final_result = 'Withdrawn')::integer)::numeric,
+        4
+    ) AS withdrawal_rate
+FROM core.student_attempts
+GROUP BY code_module, code_presentation;
+\end{lstlisting}
+
+PostgreSQL's \texttt{FILTER} clause calculates multiple conditional aggregates
+without changing the group grain. Casting the Boolean comparison to integer
+turns false into 0 and true into 1; its average is therefore a proportion.
+
+\section{Validation habits for introductory SQL}
+
+For every query, record:
+
+\begin{table}[htbp]
+\centering
+\caption{SQL reasoning template}
+\label{tab:sql-template}
+\begin{tabularx}{\textwidth}{L{0.27\textwidth}Y}
+\toprule
+Question & Required statement \\
+\midrule
+Analytical question & What decision or understanding motivates the query? \\
+Input & Which table or view is read? \\
+Input grain & What does one input row represent? \\
+Filter & Which rows are included or excluded? \\
+Output grain & What does one result row represent? \\
+Null risk & Which expressions exclude or preserve nulls? \\
+Duplication risk & Can one input row appear more than once? \\
+Expected evidence & Which counts, ranges, or categories are known? \\
+Validation & How will row counts or totals be reconciled? \\
+Later use & Which analysis could consume the result? \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Knowledge check}
+
+\begin{enumerate}
+  \item Why should \texttt{ORDER BY} accompany a reproducible limited sample?
+  \item What is the difference between \texttt{count(*)} and
+    \texttt{count(score)}?
+  \item When is \texttt{HAVING} used instead of \texttt{WHERE}?
+  \item Why does filtering not automatically change table grain?
+  \item What null error can occur in a \texttt{CASE} expression?
+  \item How can grouped totals validate an aggregation?
+\end{enumerate}
+
+\begin{exercisebox}{Exercise 8.1: Inspect assessment definitions}
+Write a query returning module, presentation, assessment type, due day, and
+weight from \texttt{core.assessments}. Keep non-exam assessments with a known
+due day between 0 and 90, order by module-presentation and due day, and limit
+the display to 50 rows. State input grain, output grain, null rule, and expected
+use.
+\solutionref{sol:sql-inspection}
+\end{exercisebox}
+
+\begin{exercisebox}{Exercise 8.2: Validate outcome percentages}
+Extend the outcome count query to return a percentage. Verify that counts sum
+to 32,593 and explain why rounded percentages might not sum to exactly 100.
+\solutionref{sol:sql-outcomes}
+\end{exercisebox}
+
+\begin{exercisebox}{Exercise 8.3: Profile missingness by module}
+Write a query that returns one row per module with:
+\begin{itemize}
+  \item total attempts;
+  \item attempts with missing \texttt{imd\_band}; and
+  \item missing percentage.
+\end{itemize}
+Use conditional aggregation. State why this is descriptive and not evidence
+that module membership caused missingness.
+\solutionref{sol:sql-missing}
+\end{exercisebox}
+
+\begin{exercisebox}{Exercise 8.4: Find repeated student identifiers}
+Write a query returning student IDs that occur in more than one attempt,
+including their number of attempts. Order from most to least attempts and limit
+the display to 25. Explain why this output must not be joined back to
+interaction rows without a module-presentation key.
+\solutionref{sol:sql-repeats}
+\end{exercisebox}
+
+\begin{commonmistakes}
+\begin{itemize}
+  \item Running \texttt{SELECT *} on the 10.6 million-row interaction table
+    without a limit.
+  \item Omitting \texttt{ORDER BY} and treating an arbitrary sample as stable.
+  \item Using \texttt{= NULL}.
+  \item Treating null scores as zero without an explicit analytical rule.
+  \item Selecting nongrouped columns that do not define the output grain.
+  \item Interpreting grouped associations as causes.
+\end{itemize}
+\end{commonmistakes}
+
+\transferheading
+The SQL clauses in this chapter transfer directly to most relational datasets.
+What changes is the domain meaning: table grain, valid categories, missingness,
+and validation totals. Carry the reasoning template with the syntax.
+
+\begin{summarybox}
+Introductory SQL begins with a question and an input grain. Selection,
+filtering, categorization, distinct counting, numerical aggregation, grouping,
+and group filtering produce relations at explicit output grains. Null behavior
+and grouped reconciliation are part of the query, not afterthoughts. The next
+SQL chapters will build joins and windows on this foundation.
+\end{summarybox}

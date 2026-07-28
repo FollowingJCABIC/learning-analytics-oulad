@@ -1,18 +1,47 @@
-# Learning Analytics: Engagement, Assessment, and Outcome Forecasting
+# Disengagement Showed Up Before the Course Was Over
 
 **PostgreSQL + SQL + Python project using the real Open University Learning
 Analytics Dataset (OULAD).**
 
-This project builds a relational analytics system for studying engagement,
-assessment progress, withdrawal timing, and weekly outcome forecasts. SQL owns
-the data model, stable metric definitions, quality checks, analytical marts,
-window functions, and point-in-time feature snapshots. Python owns source
-verification, statistical analysis, visualization, model pipelines,
-calibration, threshold analysis, and report generation.
+I used anonymous Open University records to understand when students began to
+pull away from an online course and whether the information available at the
+time could support earlier help. Nearly one in three course attempts ended in
+withdrawal. Typical weekly clicks fell from 70 in week 2 to 18.5 in week 12,
+and among students who withdrew they fell from 26 twelve weeks before the
+recorded withdrawal to 10 one week before it.
+
+I also tested whether a weekly record could help anticipate a student's next
+non-exam assessment being missing by its due date or scoring below 40. The
+unit was one student-course attempt at the end of one course week, when a later
+non-exam assessment with a known due date was available. In the later 2014J
+test, 24,724 of 117,186 weekly snapshots (21.1%) were followed by that result.
+Exams were excluded because OULAD often does not provide their due dates. The
+calibrated logistic model's alerts were correct 61.6% of the time and found
+42.1% of the cases that actually occurred. That result could help an instructor
+choose which records to review, but it missed more than half of the actual
+cases and should not make an automatic decision about a student.
 
 [SQL gallery](sql/gallery/queries.sql) | [Methodology](docs/methodology.md) |
-[Model card](docs/model-card.md) | [Dashboard](dashboard/index.html) |
-[Two-minute walkthrough](docs/reviewer-guide.md)
+[Forecast evaluation](docs/forecast-evaluation.md) | [Dashboard](dashboard/index.html) |
+[Project walkthrough](docs/project-walkthrough.md)
+
+## Three findings
+
+1. **Disengagement appeared before the course ended.** Withdrawal was recorded
+   for 10,156 of 32,593 course attempts (31.2%), and activity declined well
+   before the recorded withdrawal week. The data do not explain why a student
+   withdrew.
+2. **Course context changed the meaning of missing work.** Missing-submission
+   rates ranged from 14.7% to 56.5% across course offerings. A single rule for
+   every course would have hidden that difference.
+3. **The next poor assessment result could be anticipated, with limits.** At a
+   50% cutoff, the calibrated logistic model flagged 14.4% of later-test weekly
+   snapshots. About 62 of every 100 alerts were correct, but the model found
+   only about 42 of every 100 actual cases.
+
+The separate 28-day withdrawal model produced too many false alerts for
+individual use. Only 8.0% of its alerts were correct on a 3.9% event rate, so I
+report it as an unsuccessful model rather than an individual warning system.
 
 ## Verified dataset
 
@@ -35,18 +64,15 @@ OULAD covers selected anonymized Open University modules from 2013 and 2014.
 The source is licensed under CC BY 4.0; see [DATA_LICENSE.md](DATA_LICENSE.md).
 Source files are downloaded on demand and are not committed.
 
-## Analytical questions
+## Questions I asked
 
-1. How do engagement volume, consistency, and inactivity differ across weeks
-   and module-presentations?
-2. How do assessment availability, submission timing, missing submissions, and
-   weighted progress vary?
-3. What recorded activity patterns appear before withdrawal, without treating
-   association as explanation?
-4. At the end of a course week, how well can available information forecast a
-   missing or below-pass next assessment?
-5. How do calibration, threshold workload, course week, and held-out
-   presentation affect the interpretation of model performance?
+1. When did declining online activity become visible?
+2. Did missing work mean the same thing in every course offering?
+3. What changed in the weeks before a recorded withdrawal?
+4. Could the information available at the time help anticipate a missing or
+   below-40 next assessment?
+5. Would the forecast be accurate and early enough to support human review
+   without becoming an automated judgment?
 
 ## Architecture
 
@@ -69,8 +95,8 @@ Python analysis, visualizations, modeling, calibration
 Reports and focused static dashboard
 ```
 
-The relational design and table grains are documented in
-[docs/sql-mastery.md](docs/sql-mastery.md). The Python package is documented in
+The way I connected and organized the tables is documented in
+[docs/sql-design.md](docs/sql-design.md). The Python package is documented in
 [docs/python-engineering.md](docs/python-engineering.md).
 
 ## SQL highlights
@@ -100,18 +126,20 @@ The relational design and table grains are documented in
 
 ## Forecast definition
 
-At the end of a weekly snapshot, the primary target records whether the next
-non-exam assessment is absent by its expected due day or has a recorded score
-below the documented pass threshold of 40. Features use only activity,
-submissions, and due dates available at or before that snapshot. The label is
-used only after its future outcome becomes known.
+At the end of one course week, the primary model estimates whether the next
+non-exam assessment for that student-course attempt will be absent by its due
+date or have a recorded score below 40. One record is one weekly snapshot with
+a known upcoming assessment. Exams are excluded because their due dates are
+often unavailable. The model uses only activity, submissions, scores, and due
+dates that could have been known by the end of that week.
 
 Presentations from 2013 train the models, complete 2014B presentations form the
-validation set, and complete 2014J presentations form the held-out test set.
-No random row split mixes weekly records from the same presentation across
-partitions.
+validation set, and complete 2014J presentations form the later test set. B and
+J are the source dataset's labels for earlier- and later-year teaching periods.
+No random row split mixes weekly records from the same presentation across the
+development and test groups.
 
-## Executed results
+## What the analysis found
 
 - All 18 error-level SQL checks passed; six warning or informational checks
   remain visible, including 688,988 pre-course activity rows, 11 assessments
@@ -120,7 +148,7 @@ partitions.
   the data do not identify why an attempt ended.
 - The largest module-presentation missing-submission rate was 56.5% in CCC
   2014B; course design and unobserved context limit comparison.
-- On complete held-out 2014J presentations, the boosted challenger reached
+- On complete later 2014J presentations, the boosted challenger reached
   0.642 precision-recall AUC. The calibrated logistic reference reached 0.594
   PR AUC and a 0.130 Brier score.
 - The weekly materialized mart ran about 18 times faster than the measured raw
@@ -179,5 +207,5 @@ Rebuild from scratch with `make clean-db`, `make db-init`, `make ingest`, and
 VLE clicks are platform traces, not direct measures of effort, attention,
 motivation, understanding, or intelligence. Withdrawal may occur for reasons
 not represented in the data. OULAD is historical and institution-specific.
-Findings are associative, demographic comparisons require care, and held-out
-performance here does not establish performance elsewhere.
+Findings are associative, demographic comparisons require care, and performance
+on the later test courses does not establish that the model will transfer elsewhere.

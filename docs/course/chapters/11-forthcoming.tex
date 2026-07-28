@@ -1,0 +1,163 @@
+\chapter{Forthcoming Course Modules}
+\label{ch:forthcoming}
+
+\begin{plainlanguage}
+Edition 0.1 ends after introductory SQL and the cumulative lab. The modules in
+this chapter are a transparent roadmap, not claims of finished instruction.
+Each entry names the intended learning work and the project evidence that a
+later edition should use.
+\end{plainlanguage}
+
+\ForthcomingChapter
+  {SQL Joins and Analytical Grain}
+  {Join the OULAD relations without changing the intended unit of analysis;
+   reason about one-to-one, one-to-many, and many-to-many paths; detect row
+   multiplication; and validate pre-aggregation.}
+  {Construct an attempt-level assessment summary and an attempt-level activity
+   summary, then join them only after key tests pass.}
+  {\projectfile{sql/02_staging.sql}, \projectfile{sql/03_core.sql}, and
+   \projectfile{sql/gallery/}.}
+
+\ForthcomingChapter
+  {Intermediate and Advanced SQL}
+  {Use common table expressions, window functions, conditional aggregation,
+   date-relative frames, query plans, views, and materialized views while
+   preserving analytical meaning.}
+  {Build presentation-level rankings and cumulative engagement summaries, then
+   compare equivalent query plans.}
+  {\projectfile{sql/gallery/}, \projectfile{sql/06_features.sql}, and existing
+   reporting queries.}
+
+\ForthcomingChapter
+  {Python and pandas}
+  {Load database extracts safely, inspect dtypes and keys, write vectorized
+   transformations, test reusable functions, and compare pandas operations with
+   their SQL equivalents.}
+  {Reproduce one validated SQL summary in pandas and reconcile every count.}
+  {\projectfile{src/learning_analytics/config.py},
+   \projectfile{src/learning_analytics/analysis.py}, and the test suite.}
+
+\ForthcomingChapter
+  {Exploratory Data Analysis}
+  {Separate data checks from exploration; examine distributions, missingness,
+   time, and subgroup composition; and maintain a question-and-evidence log.}
+  {Create an attempt-level EDA notebook or script whose reported totals reconcile
+   to the quality outputs.}
+  {\begin{itemize}
+     \item \projectfile{reports/tables/source_file_profile.csv}
+     \item \projectfile{reports/tables/sql_quality_results.csv}
+     \item Existing analysis code
+   \end{itemize}}
+
+\ForthcomingChapter
+  {Statistics}
+  {Use sampling language, uncertainty intervals, effect sizes, and carefully
+   bounded comparisons; distinguish statistical association from practical or
+   causal importance.}
+  {Estimate and interpret uncertainty for selected descriptive proportions
+   without presenting the source as a random sample of all learners.}
+  {Outcome summaries, the OULAD documentation, and later analysis outputs.}
+
+\ForthcomingChapter
+  {Visualization}
+  {Choose visual encodings that match data type and question, expose
+   denominators, handle missing categories, and test charts for accessibility
+   and interpretive honesty.}
+  {Rebuild the outcome distribution and one time-based view with a written
+   chart-validation checklist.}
+  {\projectfile{reports/figures/} and
+   \projectfile{src/learning_analytics/analysis.py}.}
+
+\ForthcomingChapter
+  {Engagement Feature Engineering}
+  {Define activity windows, aggregate clicks and active days, distinguish site
+   breadth from volume, and test feature grain.}
+  {Build attempt-level engagement features for explicitly bounded observation
+   windows and reconcile them to source activity.}
+  {\projectfile{sql/06_features.sql} and
+   \projectfile{src/learning_analytics/features.py}.}
+
+\ForthcomingChapter
+  {Assessment Feature Engineering}
+  {Construct submission, score, deadline, and completion features while
+   preserving missingness and avoiding duplicated assessments.}
+  {Produce an attempt-level assessment feature table with key, range, and
+   denominator tests.}
+  {\projectfile{sql/06_features.sql}, assessment source tables, and feature
+   code.}
+
+\ForthcomingChapter
+  {Time-aware Analytical Design}
+  {Define an observation date, prediction horizon, eligibility rule, and
+   outcome window; align every feature to information available at that time.}
+  {Draw and implement a timeline for one early-support analysis.}
+  {Relative-day fields, registration timing, VLE activity, and assessment due
+   dates.}
+
+\ForthcomingChapter
+  {Leakage Prevention}
+  {Recognize target, temporal, aggregation, and split leakage; audit feature
+   provenance; and write automated leakage checks.}
+  {Classify candidate features by availability and reject those containing
+   post-cutoff or outcome-derived information.}
+  {\projectfile{docs/methodology.md}, feature SQL, and modeling code.}
+
+\ForthcomingChapter
+  {Predictive Modeling}
+  {Establish a baseline, define a target and eligible cohort, fit interpretable
+   models, and keep preprocessing inside the training workflow.}
+  {Compare a naive baseline with a regularized classifier using a time-aware
+   split.}
+  {\projectfile{src/learning_analytics/modeling.py} and model configuration.}
+
+\ForthcomingChapter
+  {Model Evaluation}
+  {Choose metrics for class imbalance and decision context; evaluate
+   discrimination, calibration, thresholds, and subgroup behavior.}
+  {Create a model-comparison table whose metrics are tied to a stated use case
+   rather than a single winning score.}
+  {Saved model metrics, prediction outputs, and
+   \projectfile{docs/forecast-evaluation.md}.}
+
+\ForthcomingChapter
+  {Error Analysis and Interpretation}
+  {Inspect false positives and false negatives, compare errors across relevant
+   groups and presentations, and separate model behavior from causal stories.}
+  {Build a reproducible error slice and write an interpretation with competing
+   explanations.}
+  {Prediction outputs, attempt attributes, and model documentation.}
+
+\ForthcomingChapter
+  {Responsible Educational Analytics}
+  {Analyze privacy, consent, fairness, intervention burden, human oversight,
+   and the consequences of acting on uncertain predictions.}
+  {Write a pre-deployment review that includes a non-deployment option and an
+   appeals path.}
+  {\projectfile{docs/forecast-evaluation.md}, dataset documentation, and published OULAD
+   context.}
+
+\ForthcomingChapter
+  {Reproducibility and Software Quality}
+  {Package configuration, tests, data contracts, deterministic builds, logs,
+   and documentation into an auditable analytical product.}
+  {Rebuild the project from a clean environment and produce a provenance
+   manifest for every reported artifact.}
+  {\projectfile{Makefile}, \projectfile{pyproject.toml}, scripts, SQL entry
+   points, and tests.}
+
+\ForthcomingChapter
+  {Final Capstone}
+  {Integrate question design, relational data work, SQL, Python, statistics,
+   visualization, time-aware modeling, careful interpretation, and
+   reproducibility.}
+  {Deliver an evidence-backed analytical report, reproducible code, quality
+   record, model documentation where applicable, and a short oral defense.}
+  {The complete learning-analytics repository and all completed course modules.}
+
+\section{What the roadmap does not imply}
+
+The presence of project scripts or saved artifacts does not mean the teaching
+modules above are complete. A future edition must still explain each idea from
+first principles, connect it to executable work, provide exercises and guided
+solutions, and verify every reported result. Until then, these entries remain
+explicitly forthcoming.

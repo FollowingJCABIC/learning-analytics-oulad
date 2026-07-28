@@ -60,7 +60,8 @@ aptitude, or a prescribed response.
 ## Split strategy
 
 Presentations from 2013 train the models. Complete 2014B presentations form the
-validation set. Complete 2014J presentations form the held-out test set. This
+validation set. Complete 2014J presentations form the later test set and are not
+used during model development. This
 prevents weekly rows from the same module-presentation from crossing
 partitions and tests movement to later presentations. The split is stricter
 and more operationally meaningful than a random 80/20 row split.

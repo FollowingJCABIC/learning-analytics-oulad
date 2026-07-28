@@ -1,0 +1,377 @@
+\chapter{Cumulative Lab: Put the Pieces Together}
+\label{ch:cumulative-lab}
+
+\begin{plainlanguage}
+Now it is your turn to work through the project in one connected pass. Start
+with a question, make sure you understand the tables, load the data, check what
+happened, and explain what you found. The goal is not to move quickly. The goal
+is to make each choice clear enough that you could walk someone else through
+it.
+\end{plainlanguage}
+
+\section{Learning objectives}
+
+By the end of the lab, you should be able to:
+\begin{itemize}
+  \item state an analytical question and identify its unit of analysis;
+  \item explain the grain and key of every source table you use;
+  \item establish a PostgreSQL environment without hiding configuration choices;
+  \item audit, import, type, and validate the OULAD source data;
+  \item write introductory SQL that answers bounded descriptive questions; and
+  \item keep an evidence log that separates observed results from interpretation.
+\end{itemize}
+
+\section{Scenario and deliverables}
+
+Imagine that a learning-support team wants an initial orientation to the data.
+The team asks:
+
+\begin{quote}
+How many student--module attempts appear in each final-result category, how
+often do students appear in more than one module presentation, and which source
+quality conditions should constrain later analysis?
+\end{quote}
+
+The wording matters. This is descriptive, not causal. It asks what the recorded
+data contain, not why a student passed, failed, or withdrew.
+
+Your lab submission has five small deliverables:
+\begin{enumerate}
+  \item a one-page source and grain map;
+  \item an environment record containing the database path you used;
+  \item an import reconciliation table;
+  \item a quality-gate note; and
+  \item a six-query SQL portfolio with an evidence log.
+\end{enumerate}
+
+\begin{projectconnection}
+\textbf{The lab's primary unit.}
+The primary unit is a \emph{student--module presentation attempt}, represented
+by one row in \projectfile{studentInfo.csv}. The same student may contribute
+more than one attempt. A count of rows is therefore not automatically a count
+of distinct people.
+\end{projectconnection}
+
+\section{Part A: Write the source and grain map}
+
+Before opening SQL, complete \cref{tab:lab-source-map}. The first two rows are
+provided as examples.
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Cumulative lab source and grain map}
+\label{tab:lab-source-map}
+\begin{tabularx}{\textwidth}{@{}lXXX@{}}
+\toprule
+Source & One row represents & Candidate key & Intended role \\
+\midrule
+\projectfile{studentInfo.csv} &
+One student in one module presentation &
+\texttt{student\_id + module + presentation} &
+Attempt-level demographics and final result \\
+\projectfile{studentRegistration.csv} &
+One registration record for an attempt &
+\texttt{student\_id + module + presentation} &
+Registration and withdrawal timing \\
+\projectfile{courses.csv} & \emph{Complete} & \emph{Complete} & \emph{Complete} \\
+\projectfile{assessments.csv} & \emph{Complete} & \emph{Complete} & \emph{Complete} \\
+\projectfile{studentAssessment.csv} & \emph{Complete} & \emph{Complete} & \emph{Complete} \\
+\projectfile{vle.csv} & \emph{Complete} & \emph{Complete} & \emph{Complete} \\
+\projectfile{studentVle.csv} & \emph{Complete} & \emph{Complete} & \emph{Complete} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{validationbox}
+For every table, say the phrase ``one row represents'' aloud. If you cannot
+finish the sentence precisely, return to \cref{ch:oulad-data}. A list of column
+names is not a grain statement.
+\end{validationbox}
+
+\begin{exercisebox}{Lab checkpoint 1: defend the unit of analysis}
+\label{ex:lab-grain}
+Write three sentences explaining why \texttt{COUNT(*)} from
+\texttt{core.student\_info} counts attempts, why
+\texttt{COUNT(DISTINCT student\_id)} counts people, and why the two values need
+not match. Then predict which count will be larger in this dataset.
+\end{exercisebox}
+
+\section{Part B: Record the environment}
+
+Choose one of the supported paths from \cref{ch:postgresql-setup}: Docker
+Compose or a local PostgreSQL installation. Record:
+\begin{itemize}
+  \item the path chosen;
+  \item the PostgreSQL version;
+  \item the database name;
+  \item the exact form of \texttt{DATABASE\_URL}, with any password redacted;
+  \item the command used to prove the connection; and
+  \item the date and time of the run.
+\end{itemize}
+
+\begin{lstlisting}[language=bash,caption={A concise environment record}]
+python --version
+psql --version
+psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 \
+  -c "select current_database(), current_user, version();"
+\end{lstlisting}
+
+\begin{commonmistakes}
+\textbf{Do not publish secrets.}
+Record the \emph{shape} of a connection string, but redact passwords and private
+host details before publishing screenshots, logs, or coursework.
+\end{commonmistakes}
+
+\begin{exercisebox}{Lab checkpoint 2: diagnose before proceeding}
+\label{ex:lab-environment}
+Suppose \texttt{psql} reports that the role
+\texttt{learning\_analytics} does not exist. Give one repair for the Docker path
+and one repair for a trusted local PostgreSQL path. Explain why repeatedly
+rerunning the import script would not solve this connection error.
+\end{exercisebox}
+
+\section{Part C: Audit and import}
+
+Follow the repository's intended sequence:
+\begin{enumerate}
+  \item obtain the source archive through the audited download command;
+  \item verify the expected files and source checksum;
+  \item initialize the schemas and raw tables;
+  \item load all seven CSV files;
+  \item build the staging and core relations; and
+  \item reconcile source, raw, and core counts.
+\end{enumerate}
+
+Do not skip the source audit merely because the filenames look right. A
+reproducible source is identified by content and structure, not only by a
+familiar name.
+
+\Needspace{13\baselineskip}
+\begin{lstlisting}[language=bash,caption={Repository-level orchestration for a complete first run}]
+make setup
+make data
+make db-init
+make load
+make pipeline
+make quality
+\end{lstlisting}
+
+The exact targets may be run separately during diagnosis. The shell scripts use
+stop-on-error behavior, and the SQL entry points use
+\texttt{ON\_ERROR\_STOP}; a failed statement should interrupt the run rather
+than quietly producing a partly built database.
+
+\subsection{Reconciliation table}
+
+Complete one row per source:
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Import reconciliation record}
+\label{tab:lab-reconciliation}
+\begin{tabularx}{\textwidth}{@{}lrrrrX@{}}
+\toprule
+Source & CSV rows & Raw rows & Core rows & Difference & Explanation \\
+\midrule
+\projectfile{courses.csv} & 22 & & & & \\
+\projectfile{assessments.csv} & 206 & & & & \\
+\projectfile{vle.csv} & 6,364 & & & & \\
+\projectfile{studentInfo.csv} & 32,593 & & & & \\
+\projectfile{studentRegistration.csv} & 32,593 & & & & \\
+\projectfile{studentAssessment.csv} & 173,912 & & & & \\
+\projectfile{studentVle.csv} & 10,655,280 & & & & \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+For the current source, the seven CSV files contain 10,900,970 data rows in
+total. Treat that number as a reconciliation target, not as proof that every
+row is analytically valid.
+
+\begin{exercisebox}{Lab checkpoint 3: investigate a discrepancy}
+\label{ex:lab-reconcile}
+Assume \texttt{raw.student\_assessment} has 173,911 rows after import, while the
+audited CSV has 173,912. List a three-step investigation that preserves the
+failed evidence. Do not propose manually inserting a guessed row.
+\end{exercisebox}
+
+\section{Part D: Interpret the quality gate}
+
+Run the repository quality suite and classify the output:
+\begin{description}
+  \item[Errors] Conditions that must pass before analysis continues.
+  \item[Warnings] Conditions that require interpretation or a documented choice.
+  \item[Information] Profiles that describe the data without declaring failure.
+\end{description}
+
+The checked project results contain 24 quality entries: 18 error-level tests
+that pass, three warning profiles, and three informational profiles. The
+warnings identify 688,988 activity records dated before module start, 11
+assessments with missing due dates, and 1,111 attempt records with missing
+IMD-band values.
+
+\begin{exercisebox}{Lab checkpoint 4: write a quality-gate note}
+\label{ex:lab-quality}
+Write a five-sentence quality-gate note. It must state whether the error gate
+passed, describe all three warning profiles, distinguish a warning from a
+failure, and name one later analytical decision affected by each warning.
+\end{exercisebox}
+
+\section{Part E: Build the six-query portfolio}
+
+Run each query, save the SQL, and add one evidence-log entry. The queries are
+small by design: the challenge is precise interpretation.
+
+\subsection{Query 1: confirm the attempt population}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    COUNT(*) AS attempt_count,
+    COUNT(DISTINCT student_id) AS student_count
+FROM core.student_info;
+\end{lstlisting}
+
+Expected values for the audited source are 32,593 attempts and 28,785 distinct
+students.
+
+\subsection{Query 2: describe final outcomes}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    final_result,
+    COUNT(*) AS attempts,
+    ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 1) AS pct
+FROM core.student_info
+GROUP BY final_result
+ORDER BY attempts DESC;
+\end{lstlisting}
+
+The expected counts are Pass 12,361, Withdrawn 10,156, Fail 7,052, and
+Distinction 3,024. State explicitly that these are attempt counts.
+
+\subsection{Query 3: count repeat appearances}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    COUNT(*) FILTER (WHERE attempt_count = 1) AS one_attempt,
+    COUNT(*) FILTER (WHERE attempt_count > 1) AS multiple_attempts,
+    MAX(attempt_count) AS maximum_attempts
+FROM (
+    SELECT student_id, COUNT(*) AS attempt_count
+    FROM core.student_info
+    GROUP BY student_id
+) AS per_student;
+\end{lstlisting}
+
+\subsection{Query 4: inspect withdrawal timing}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    COUNT(*) AS registration_records,
+    COUNT(date_unregistration) AS recorded_withdrawal_dates,
+    MIN(date_unregistration) AS earliest_relative_day,
+    MAX(date_unregistration) AS latest_relative_day
+FROM core.student_registration;
+\end{lstlisting}
+
+The day fields are relative to presentation start. Do not silently translate
+them into calendar dates.
+
+\subsection{Query 5: profile assessment due-date missingness}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    assessment_type,
+    COUNT(*) AS assessments,
+    COUNT(*) FILTER (WHERE due_date IS NULL) AS missing_due_dates
+FROM core.assessments
+GROUP BY assessment_type
+ORDER BY assessment_type;
+\end{lstlisting}
+
+\subsection{Query 6: bound engagement timing}
+
+\begin{lstlisting}[language=SQL]
+SELECT
+    COUNT(*) AS activity_rows,
+    COUNT(*) FILTER (WHERE activity_date < 0) AS pre_start_rows,
+    MIN(activity_date) AS earliest_day,
+    MAX(activity_date) AS latest_day
+FROM core.student_vle;
+\end{lstlisting}
+
+\begin{commonmistakes}
+\textbf{A row is not a behavior.}
+An activity record reflects the structure of the VLE extract. It is not,
+without further definition, a learning session, a moment of attention, or
+evidence of motivation.
+\end{commonmistakes}
+
+\section{The evidence log}
+
+Use one row per reported finding:
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Evidence-log template}
+\label{tab:evidence-log}
+\begin{tabularx}{\textwidth}{@{}p{0.08\textwidth}XXXX@{}}
+\toprule
+Query & Observed result & Unit and population & Interpretation & Limitation or check \\
+\midrule
+1 & & & & \\
+2 & & & & \\
+3 & & & & \\
+4 & & & & \\
+5 & & & & \\
+6 & & & & \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+A strong entry for Query 2 might read: ``Among 32,593 recorded
+student--module presentation attempts, 10,156 (31.2\%) have a final result of
+Withdrawn. This describes recorded outcomes at attempt grain; it does not
+estimate a causal effect or a person-level withdrawal rate.''
+
+\begin{exercisebox}{Lab checkpoint 5: final synthesis}
+\label{ex:lab-synthesis}
+Write a 150--200 word briefing for the learning-support team. Include two
+descriptive findings, one quality warning, one grain warning, and one next
+question. Avoid the words \emph{caused}, \emph{proved}, and \emph{at risk}
+unless the evidence genuinely supports them.
+\end{exercisebox}
+
+\section{Common mistakes}
+
+\begin{itemize}
+  \item Reporting an attempt count as a student count.
+  \item Treating an expected row count as sufficient evidence of source integrity.
+  \item Continuing after a failed error-level quality check.
+  \item Deleting pre-start activity because its date looks surprising.
+  \item Calling missing values ``bad data'' before studying their meaning.
+  \item Describing a descriptive association as an explanation or intervention effect.
+  \item Publishing credentials or machine-specific paths in an evidence log.
+\end{itemize}
+
+\section{Transfer task}
+
+Choose a different relational dataset with at least three tables. Produce only
+the source-and-grain map and the six fields of an environment record. Then
+write two introductory aggregation queries. The point is to transfer the
+workflow, not the OULAD vocabulary.
+
+\section{Guided solutions}
+
+Guided responses for the five checkpoints appear in
+\cref{sol:lab-grain,sol:lab-environment,sol:lab-reconcile,sol:lab-quality,sol:lab-synthesis}.
+
+\section{Chapter summary}
+
+The cumulative lab turns a collection of commands into an analytical
+discipline: define the question, name the grain, record the environment, audit
+the source, reconcile the import, pass the quality gate, query deliberately,
+and preserve the boundary between evidence and interpretation.

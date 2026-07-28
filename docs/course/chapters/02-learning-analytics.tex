@@ -1,0 +1,320 @@
+\chapter{Learning Analytics and the OULAD Problem}
+\label{ch:learning-analytics}
+
+\begin{learningobjectives}
+After completing this chapter, you will be able to:
+\begin{itemize}
+  \item define learning analytics, engagement, assessment performance, and
+    outcome forecasting in plain and technical language;
+  \item distinguish descriptive, predictive, and causal questions;
+  \item explain the benefits and risks of using educational records;
+  \item state what the implemented OULAD project can and cannot establish; and
+  \item write a responsible analytical question with an explicit unit and
+    claim boundary.
+\end{itemize}
+\end{learningobjectives}
+
+\section{Vocabulary for asking questions with data}
+
+Chapter 1 introduced the software words. This chapter introduces the words used
+to turn a real-world concern into a question that data can answer.
+
+\begin{longtable}{@{}L{0.22\textwidth}L{0.71\textwidth}@{}}
+\caption{Basic analytical vocabulary}\label{tab:analytical-vocabulary}\\
+\toprule
+Term & Meaning in this course \\
+\midrule
+\endfirsthead
+\toprule
+Term & Meaning in this course \\
+\midrule
+\endhead
+\term{Record or observation} &
+One recorded case. Depending on the table, it might be a course offering, a
+student's course attempt, an assessment, or one day's online activity. \\
+\term{Variable} &
+One recorded characteristic that can differ across observations, such as final
+result, score, or number of clicks. In a table, a variable is usually stored in
+a column. \\
+\term{Measure or metric} &
+A value chosen to summarize something, such as attempt count or average score.
+A metric is a definition made by an analyst; it is not the complete reality
+behind the number. \\
+\term{Outcome} &
+The event or result being described or predicted. In one OULAD question it
+might be the final-result category; in another it might be whether the next
+assessment is missing. \\
+\term{Population} &
+The full set of observations a claim is about. ``All attempts recorded in
+OULAD'' is a population; ``all university students everywhere'' is not the
+population represented by this dataset. \\
+\term{Unit of observation} &
+What one record represents. This is also called the observation grain. A
+student and a student-course attempt are different units. \\
+\term{Proportion and percentage} &
+A proportion is a part divided by a whole, such as withdrawn attempts divided
+by all attempts. Multiplying a proportion by 100 expresses it as a percentage.
+The denominator, or whole, must always be named. \\
+\term{Pattern or association} &
+A difference or relationship observed in records. An association can be real
+without showing that one variable caused the other. \\
+\term{Proxy} &
+A recorded stand-in for something that is difficult to measure directly.
+Clicks can be a proxy for one aspect of online activity, but they are not a
+direct measure of attention, effort, or learning. \\
+\term{Prediction or forecast} &
+An estimate of a later or unknown recorded outcome. A prediction says what the
+model expects, not why the outcome will occur. \\
+\term{Model} &
+A mathematical rule that uses input variables to calculate a summary or
+prediction. Models can be useful and still be uncertain or wrong. \\
+\term{Claim boundary} &
+A sentence stating how far the evidence reaches. It names what a result
+describes and what it does not prove. \\
+\bottomrule
+\end{longtable}
+
+\begin{plainlanguage}
+An analytical question should identify the people or records under discussion,
+what one record represents, what is measured, and how strong an answer the data
+can support. Those four choices prevent a number from quietly becoming a much
+larger claim.
+\end{plainlanguage}
+
+\section{What learning analytics means}
+
+\term{Learning analytics} is the organized use of data about learners and
+learning environments to understand and improve educational processes. The
+phrase covers many tasks: describing participation, finding data-quality
+problems, evaluating assessment patterns, forecasting a recorded event, or
+supporting a conversation about course design.
+
+\begin{plainlanguage}
+Learning analytics asks what can be learned from records created while
+education is taking place. The records are traces of a system, not complete
+measurements of a person.
+\end{plainlanguage}
+
+The OULAD project studies records from selected Open University module
+presentations, meaning particular deliveries of a course, in 2013 and 2014
+\citep{oulad_dataset,oulad_paper}. Its source
+tables connect module offerings, registrations, assessments, recorded student
+information, online resources, submissions, and Virtual Learning Environment
+(VLE) interactions. A VLE is the institution's online course system.
+
+\section{Four concepts that must not be collapsed}
+
+\begin{description}
+  \item[Student engagement] A broad educational idea concerning participation
+    and involvement. In this project, it is represented only by limited
+    indicators such as recorded VLE clicks and active days.
+  \item[Assessment performance] Recorded evidence associated with coursework or
+    examinations, including submission timing, missing submissions, scores, and
+    weights.
+  \item[Course outcome] OULAD's recorded final category: Distinction, Pass, Fail,
+    or Withdrawn.
+  \item[Outcome forecast] A model estimate about a later recorded event using
+    information available at a specified earlier point.
+\end{description}
+
+The first three concepts describe different objects. A student can click often
+without understanding the material; a low click count can coexist with offline
+study; a missing submission can reflect circumstances not captured in the
+data; withdrawal is an administrative outcome, not a diagnosis.
+
+\section{Description, prediction, and causation}
+
+\begin{table}[htbp]
+\centering
+\caption{Three kinds of analytical claim}
+\label{tab:claim-types}
+\begin{tabularx}{\textwidth}{L{0.19\textwidth}L{0.30\textwidth}YY}
+\toprule
+Claim type & Example OULAD question & What it can establish & What it cannot establish \\
+\midrule
+Descriptive & How many attempts ended in withdrawal? & A count or proportion in the observed records & Why withdrawal occurred \\
+Predictive & Can information available this week rank later assessment risk? & How well a forecast works when checked on records not used to build it & Causal explanation or individual need \\
+Causal & Would a new support program reduce withdrawal? & The change caused by the program, if the study fairly compares what would happen with and without it & Not available from these existing records alone \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\begin{projectconnection}
+The project's saved outcome table records 3,024 Distinction, 12,361 Pass, 7,052
+Fail, and 10,156 Withdrawn student-module attempts. The withdrawal proportion
+is 31.2 percent. This is a descriptive fact about recorded attempts. It does
+not identify a cause.
+\end{projectconnection}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.86\textwidth]{outcome_distribution.png}
+\caption{Recorded final outcomes across 32,593 student-module attempts. This
+verified chart describes the dataset; it does not explain the outcomes.}
+\label{fig:outcome-distribution}
+\end{figure}
+
+\section{The implemented project questions}
+
+The project moves from description toward prediction through five questions:
+
+\begin{enumerate}
+  \item How do engagement volume, consistency, and inactivity differ across
+    weeks and module presentations?
+  \item How do assessment availability, submission timing, missing submissions,
+    and weighted progress, where assessments contribute according to their
+    course weights, vary?
+  \item What activity patterns appear before recorded withdrawal?
+  \item At the end of a course week, how well can available information forecast
+    a missing or below-pass next assessment?
+  \item Do predicted percentages agree with observed percentages
+    (\term{calibration})? How many cases are flagged at a chosen cutoff
+    (\term{threshold workload})? Does performance change by course week or on a
+    presentation excluded while building the model?
+\end{enumerate}
+
+Only the first part of this progression is taught in Edition 0.1. The complete
+questions are introduced now so that database design is connected to later
+analytical purpose.
+
+\section{Potential value}
+
+Responsible educational analytics can:
+\begin{itemize}
+  \item reveal where records are incomplete or inconsistent;
+  \item compare patterns across courses without assuming they have one cause;
+  \item make operational definitions explicit;
+  \item support investigation of course design and assessment timing;
+  \item expose uncertainty and tradeoffs before a decision; and
+  \item help institutions ask better questions about support.
+\end{itemize}
+
+These benefits depend on careful data definitions. A count at the wrong grain
+can produce a convincing but false conclusion.
+
+\section{Risks and boundaries}
+
+Educational data concern people in settings with unequal resources and power.
+Important risks include revealing private information; measuring some students
+or behaviors less accurately than others; repeating inequalities already
+present in historical records; attaching harmful labels; allowing a prediction
+to shape the very outcome it predicts; and using analysis to punish rather than
+support.
+
+\begin{validationbox}
+Before presenting an educational result, answer:
+\begin{enumerate}
+  \item What exactly was measured?
+  \item At what grain was it measured?
+  \item What important behavior is absent from the data?
+  \item Is the claim descriptive, predictive, or causal?
+  \item What harmful interpretation could a reader make?
+  \item What human review and opportunity to question or appeal the result
+    would be required before action?
+\end{enumerate}
+\end{validationbox}
+
+A ``high-risk'' prediction must never be treated as a judgment about ability,
+effort, motivation, or character. In the implemented project, the primary
+model predicts a later recorded assessment event, not a student's worth or
+instructional diagnosis. The secondary withdrawal investigation is explicitly
+documented as unsuitable for individual use.
+
+\section{Operational definitions}
+
+An \term{operational definition} states how an abstract idea becomes a
+measurable variable. For example:
+
+\begin{itemize}
+  \item ``weekly activity'' becomes the sum of \texttt{sum\_click} within a
+    course-relative week;
+  \item ``active days'' becomes the number of distinct recorded activity days;
+  \item ``missing assessment'' becomes an eligible student-assessment pair with
+    no matching submission row;
+  \item ``withdrawal'' becomes a recorded final result and, where present, an
+    unregistration day.
+\end{itemize}
+
+An operational definition makes analysis reproducible, but it does not erase
+the difference between the variable and the underlying educational concept.
+
+\section{Statistical reasoning preview}
+
+The dataset is not a random sample in which members of a larger population had
+a known chance of selection. It covers selected, anonymized modules from one
+institution and period. Therefore:
+
+\begin{itemize}
+  \item a large row count does not guarantee that a result applies elsewhere;
+  \item differences between modules may reflect design, population, policy, or
+    measurement;
+  \item repeated records from the same student are not separate, unrelated
+    people;
+  \item associations do not establish causes; and
+  \item model performance on later presentations does not establish performance
+    at another institution.
+\end{itemize}
+
+Formal statistical and modeling treatment is forthcoming. Edition 0.1 uses
+these ideas to discipline SQL interpretation.
+
+\section{Knowledge check}
+
+\begin{enumerate}
+  \item Why is a VLE click not a direct measure of learning?
+  \item Classify each project question as descriptive, predictive, or causal.
+  \item What does the recorded withdrawal proportion establish?
+  \item Give one potential benefit and two potential harms of educational
+    analytics.
+  \item What is an operational definition?
+\end{enumerate}
+
+\begin{exercisebox}{Exercise 2.1: Repair three overclaims}
+Rewrite each claim so that it matches the available evidence:
+\begin{enumerate}
+  \item ``Students with fewer clicks were less motivated.''
+  \item ``Missing work caused withdrawal.''
+  \item ``The model identifies students who will fail.''
+\end{enumerate}
+For each revision, name the measured variable, unit of observation, claim type,
+and one missing source of context.
+\solutionref{sol:learning-analytics}
+\end{exercisebox}
+
+\begin{exercisebox}{Exercise 2.2: Frame an OULAD question}
+Write one descriptive OULAD question. It must specify:
+\begin{itemize}
+  \item the population;
+  \item the observation grain;
+  \item the variable or event;
+  \item the grouping or comparison; and
+  \item a statement of what the result would not prove.
+\end{itemize}
+\solutionref{sol:learning-question}
+\end{exercisebox}
+
+\begin{commonmistakes}
+\begin{itemize}
+  \item Using ``student'' when the row actually represents a
+    student-module-presentation attempt.
+  \item Describing a platform trace as attention, effort, or understanding.
+  \item Treating a forecast as an explanation.
+  \item Recommending intervention before defining possible benefits, harms, and
+    review.
+\end{itemize}
+\end{commonmistakes}
+
+\transferheading
+For any domain, separate the real-world concept from its recorded proxy. A
+retail click is not satisfaction, a medical claim is not health, and an
+educational click is not learning. State the proxy, its grain, and its claim
+boundary.
+
+\begin{summarybox}
+Learning analytics uses educational records to answer descriptive and
+predictive questions, but the records are incomplete proxies. OULAD supports a
+careful study of registrations, assessments, outcomes, resources, and platform
+activity. It does not support causal or diagnostic claims by itself. Every
+result needs an operational definition, an observation grain, and a responsible
+scope of interpretation.
+\end{summarybox}
